@@ -327,9 +327,45 @@ main{ padding:18px 16px 8px; max-width:720px; margin:0 auto; }
 .perigo-zona h3{ font-size:14.5px; color:var(--danger); margin-bottom:4px; }
 .perigo-zona p{ font-size:13px; color:var(--text-muted); margin-bottom:12px; }
 
+/* Modo nuvem: sair do grupo não apaga os dados de ninguém (só esquece o
+   código neste aparelho), então a zona perde o tom de "perigo" vermelho. */
+.perigo-zona.is-neutro{ border-color:var(--border-strong); }
+.perigo-zona.is-neutro h3{ color:var(--text); }
+.perigo-zona.is-neutro .btn-perigo{ background:var(--surface-alt); color:var(--text); border-color:var(--border-strong); }
+.perigo-zona.is-neutro .btn-perigo:hover{ background:var(--accent-soft); color:var(--accent-strong); }
+
 .instalar-zona{ border:1px dashed var(--accent); border-radius:12px; padding:16px 18px; margin-bottom:20px; }
 .instalar-zona h3{ font-size:14.5px; color:var(--accent-strong); margin-bottom:4px; }
 .instalar-zona p{ font-size:13px; color:var(--text-muted); margin-bottom:12px; }
+
+/* ---------------- Código do grupo (sincronização) ---------------- */
+.codigo-grupo-card{
+  border:1px dashed var(--accent); border-radius:12px; padding:16px 18px; margin-bottom:20px;
+  background:var(--accent-soft);
+}
+.codigo-grupo-card h3{ font-size:14.5px; color:var(--accent-strong); margin-bottom:4px; }
+.codigo-grupo-card p{ font-size:13px; color:var(--text-muted); margin-bottom:12px; }
+.codigo-grupo-linha{ display:flex; align-items:center; gap:10px; }
+.codigo-grupo-linha code{
+  flex:1; font-family:"IBM Plex Mono", monospace; font-size:19px; font-weight:600;
+  letter-spacing:.12em; background:var(--surface); border:1.5px solid var(--border-strong);
+  border-radius:10px; padding:10px 14px; text-align:center; color:var(--text);
+}
+
+.entrar-codigo-bloco{ margin-top:22px; }
+.entrar-codigo-separador{
+  display:flex; align-items:center; text-align:center; color:var(--text-muted);
+  font-size:12px; margin-bottom:14px;
+}
+.entrar-codigo-separador::before, .entrar-codigo-separador::after{
+  content:""; flex:1; height:1px; background:var(--border);
+}
+.entrar-codigo-separador span{ padding:0 10px; }
+.entrar-codigo-titulo{ font-size:13.5px; font-weight:600; margin-bottom:8px; }
+.entrar-codigo-bloco .chip-input input{
+  min-height:44px; padding:10px 14px; border-radius:10px; border:1.5px solid var(--border-strong);
+  background:var(--surface); color:var(--text); text-transform:uppercase; letter-spacing:.08em;
+}
 
 /* ---------------- Selo de versão ---------------- */
 .version-tag{

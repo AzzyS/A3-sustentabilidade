@@ -41,6 +41,8 @@
       <h1>Combinado</h1>
       <p class="lede">Cadastre a sua squad. Isso fica salvo só neste navegador — sem conta, sem senha.</p>
 
+      <p id="carregando-grupo" class="lede" hidden>Carregando seu grupo…</p>
+
       <form id="form-grupo" novalidate>
         <div class="field">
           <label for="input-nome-grupo">Nome do grupo</label>
@@ -61,6 +63,18 @@
 
         <button type="submit" class="btn btn-primary btn-block">Criar grupo</button>
       </form>
+
+      <!-- Só aparece quando o Firebase está configurado (js/firebase-config.js) -->
+      <div id="bloco-entrar-codigo" class="entrar-codigo-bloco" hidden>
+        <p class="entrar-codigo-separador"><span>ou</span></p>
+        <p class="entrar-codigo-titulo">Já tem um código de grupo?</p>
+        <div class="chip-input">
+          <label for="input-codigo-entrar" class="visually-hidden">Código do grupo</label>
+          <input id="input-codigo-entrar" type="text" maxlength="6" placeholder="Ex.: A3K9QZ" autocapitalize="characters">
+          <button type="button" id="btn-entrar-codigo" class="btn btn-secondary">Entrar</button>
+        </div>
+        <p id="erro-codigo" class="field-erro" hidden>Não encontramos nenhum grupo com esse código.</p>
+      </div>
     </div>
   </section>
 
@@ -125,6 +139,16 @@
         </div>
         <ul id="lista-integrantes-grupo" class="member-list"></ul>
 
+        <!-- Só aparece quando o Firebase está configurado e o grupo está sincronizado -->
+        <div id="codigo-grupo-card" class="codigo-grupo-card" hidden>
+          <h3>🔗 Código do grupo</h3>
+          <p>Compartilhe este código — quem digitar ele em "Já tem um código de grupo?" vê as mesmas tarefas, em qualquer aparelho.</p>
+          <div class="codigo-grupo-linha">
+            <code id="codigo-grupo-texto">------</code>
+            <button type="button" id="btn-copiar-codigo" class="btn btn-secondary">Copiar</button>
+          </div>
+        </div>
+
         <div id="instalar-zona" class="instalar-zona" hidden>
           <h3>📲 Instalar o Combinado</h3>
           <p>Adicione à tela inicial do celular pra abrir como um app de verdade, com ícone próprio e funcionando sem internet.</p>
@@ -137,9 +161,9 @@
           <button type="button" id="btn-add-integrante-2" class="btn btn-secondary">Adicionar</button>
         </div>
 
-        <div class="perigo-zona">
-          <h3>Zona de risco</h3>
-          <p>Isso apaga o grupo e todas as tarefas deste navegador.</p>
+        <div id="perigo-zona" class="perigo-zona">
+          <h3 id="perigo-zona-titulo">Zona de risco</h3>
+          <p id="perigo-zona-texto">Isso apaga o grupo e todas as tarefas deste navegador.</p>
           <button type="button" id="btn-reiniciar" class="btn btn-perigo">Reiniciar dados do grupo</button>
         </div>
       </section>
@@ -196,8 +220,15 @@
     </form>
   </dialog>
 
-  <p id="version-tag" class="version-tag" aria-hidden="true">v1.3.0</p>
+  <p id="version-tag" class="version-tag" aria-hidden="true">v1.4.0</p>
 
+  <!-- Firebase é opcional — só entra em ação se js/firebase-config.js tiver
+       valores reais (veja o topo daquele arquivo e o README). Sem isso,
+       os dois scripts abaixo carregam mas ficam sem uso, e o Combinado
+       segue 100% no LocalStorage, como sempre. -->
+  <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore-compat.js"></script>
+  <script src="js/firebase-config.js"></script>
   <script src="js/app.js"></script>
 </body>
 </html>

@@ -36,7 +36,8 @@ A cada `push` na branch `main`, um GitHub Action (`.github/workflows/validate.ym
 - **Conquistas do grupo** — selo "Squad em dia" quando não há nenhuma tarefa atrasada, e contagem de tarefas concluídas no prazo (nunca compara pessoas entre si).
 - **Checklist de entrega** — revisão final item a item antes de entregar o trabalho.
 - **Grupo** — adicionar integrantes depois e reiniciar os dados do zero.
-- Tudo salvo em `localStorage` (chave `combinado:v1`) — sem backend, sem custo de hospedagem.
+- **Sincronização entre integrantes (opcional)** — com um código de grupo de 6 letras, cada pessoa vê as mesmas tarefas em tempo real, em qualquer aparelho. Veja a seção "Sincronização entre integrantes" abaixo.
+- Tudo salvo em `localStorage` (chave `combinado:v1`) por padrão — sem backend, sem custo de hospedagem. A sincronização é 100% opcional e cai de volta pro LocalStorage sozinha se não for configurada.
 
 ## Como isso conecta com a rubrica do A3
 
@@ -59,6 +60,34 @@ Fora das heurísticas, três outros critérios já têm evidência pronta:
 | **E** — Engajamento responsável (0,7 pt) | Selo "Squad em dia" e contagem de tarefas concluídas no prazo (`renderConquistas` em `app.js`) — reconhece o grupo como time, nunca ranqueia pessoas nem usa prazo como pressão. |
 | **F** — Deploy, GitHub e qualidade (1,0 pt) | `LICENSE`, `.gitignore`, `CHANGELOG.md`, Open Graph/Twitter cards com imagem própria (`og-image.png`) e validação automática de HTML via GitHub Actions. |
 | **D** — Mobile First (reforço do "PWA") | Service worker (`sw.js`) cacheando o app shell pra funcionar offline, e prompt de "Instalar app" na tela de Grupo. |
+
+## Sincronização entre integrantes (opcional)
+
+Por padrão, o Combinado salva tudo só no navegador de quem está usando — por isso o PC e o celular de uma mesma pessoa mostram coisas diferentes. Dá pra ligar uma sincronização real, sem login nem senha, usando um **código de grupo curto** (ex.: `A3K9QZ`) e o [Firebase](https://firebase.google.com/) (gratuito no plano usado aqui — Firestore no modo Spark).
+
+**Por que código de grupo em vez de conta com senha?** Pro escopo deste projeto (grupo pequeno, sem dado sensível), pedir e-mail/senha de cada integrante é atrito desnecessário — o mesmo problema que o "sem conta, sem senha" do onboarding já resolve. O código funciona como uma chave compartilhada: quem tem o código, edita; é uma segurança por obscuridade, não por autenticação — suficiente aqui, mas documentem essa escolha se apresentarem o projeto (Critério de arquitetura/decisões técnicas).
+
+### Como ativar (~5 minutos, uma pessoa do grupo faz isso uma vez)
+
+1. Acesse o [Console do Firebase](https://console.firebase.google.com) e crie um projeto novo (pode usar qualquer conta Google).
+2. Dentro do projeto, clique no ícone **"</>"** (Adicionar app da Web), dê um nome qualquer e **não** marque "Firebase Hosting" — não precisamos disso.
+3. O Firebase mostra um objeto `firebaseConfig` — copie os valores para dentro de `js/firebase-config.js` (troque cada `"COLE_AQUI"` pelo valor correspondente).
+4. No menu à esquerda, abra **Firestore Database → Criar banco de dados** → modo de produção → escolha a região mais próxima.
+5. Na aba **Regras** do Firestore, cole:
+   ```
+   rules_version = '2';
+   service cloud.firestore {
+     match /databases/{database}/documents {
+       match /grupos/{codigo} {
+         allow read, write: if true;
+       }
+     }
+   }
+   ```
+   (Isso deixa qualquer pessoa com o código ler/escrever aquele grupo específico — coerente com a ideia de "código = chave", mas **não** use esse padrão de regra para dados sensíveis de verdade.)
+6. Salve `js/firebase-config.js`, suba a mudança pro GitHub (ou recarregue localmente) — pronto: a tela inicial passa a mostrar "Já tem um código de grupo? Entrar", e ao criar um grupo novo, a tela de Grupo mostra um código pra compartilhar.
+
+**Sem fazer nada disso**, o Combinado continua funcionando exatamente como sempre funcionou (LocalStorage, um navegador por vez) — nada quebra.
 
 ## PWA — funciona offline e pode ser instalado
 
@@ -85,11 +114,11 @@ Este código nasceu a partir de dois documentos de planejamento do grupo (o guia
 
 Numeração fixa — use pra pedir a próxima etapa sem precisar reexplicar o que é cada uma:
 
+- [x] **1.** Sincronizar entre integrantes — código de grupo + Firestore (opcional, veja "Sincronização entre integrantes" acima). Sem configurar, continua 100% LocalStorage.
 - [x] **2.** Engajamento responsável — selo "Squad em dia" + tarefas concluídas no prazo.
 - [x] **3.** Qualidade de entrega — Open Graph, LICENSE, `.gitignore`, CHANGELOG, GitHub Action de validação.
 - [x] **4.** Editar tarefa existente.
 - [x] **5.** PWA offline de verdade — service worker + prompt de instalação.
-- [ ] **1.** Sincronizar entre integrantes — hoje cada navegador tem sua própria cópia; precisa de um backend simples (Firebase/Supabase) com código de grupo. É o maior furo funcional do produto.
 - [ ] **6.** Acessibilidade mais a fundo — teste com leitor de tela real (NVDA/VoiceOver) e anúncio por voz quando o status de uma tarefa muda.
 - [ ] **7.** Feedback/changelog contínuo — um jeito simples de registrar "isso funcionou/isso travou" dentro do fluxo do grupo, alimentando o `CHANGELOG.md`.
 
@@ -111,7 +140,8 @@ combinado-app/
 ├── css/
 │   └── style.css
 ├── js/
-│   └── app.js
+│   ├── app.js
+│   └── firebase-config.js
 └── icons/
     ├── icon-192.png
     └── icon-512.png

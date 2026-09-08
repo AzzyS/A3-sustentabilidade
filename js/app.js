@@ -23,7 +23,7 @@
      --------------------------------------------------------- */
   var state = { grupo: null, tarefas: [] };
 
-  function carregarEstado() {
+  function carregarEstadoLocal() {
     try {
       var bruto = localStorage.getItem(STORAGE_KEY);
       if (!bruto) return null;
@@ -38,7 +38,7 @@
     }
   }
 
-  function salvarEstado() {
+  function salvarEstadoLocal() {
     try {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
       return true;
@@ -48,6 +48,97 @@
       toast("Não foi possível salvar agora. Verifique o espaço/armazenamento do navegador.", { tipo: "erro" });
       return false;
     }
+  }
+
+  /* ---------------------------------------------------------
+     Sincronização entre integrantes (item 1 do roadmap)
+     Totalmente opcional: só liga se js/firebase-config.js tiver
+     valores reais (veja aquele arquivo). Sem isso, tudo continua
+     funcionando exatamente como antes — só neste navegador.
+
+     H1 (visibilidade do status) — o código do grupo fica sempre à
+     mostra na tela de Grupo, nunca é uma sincronização "escondida".
+     H9 (recuperação de erros) — se a nuvem falhar (sem internet, por
+     exemplo), o app avisa e continua funcionando com o último dado
+     que já tinha, em vez de travar.
+     --------------------------------------------------------- */
+  var CODIGO_KEY = "combinado:codigo-grupo";
+  var ALFABETO_CODIGO = "ABCDEFGHJKMNPQRSTUVWXYZ23456789"; // sem O/0/I/1, pra não confundir na hora de digitar
+
+  var modoNuvem = !!(
+    window.firebase &&
+    window.firebaseConfig &&
+    window.firebaseConfig.apiKey &&
+    window.firebaseConfig.apiKey !== "COLE_AQUI"
+  );
+
+  var db = null;
+  var codigoGrupoAtual = null;
+  var pararDeOuvirGrupo = null;
+
+  if (modoNuvem) {
+    try {
+      firebase.initializeApp(window.firebaseConfig);
+      db = firebase.firestore();
+      db.enablePersistence({ synchronizeTabs: true }).catch(function (erro) {
+        console.warn("Persistência offline do Firestore não disponível:", erro);
+      });
+    } catch (erro) {
+      console.warn("Não foi possível iniciar a sincronização, seguindo só com este navegador:", erro);
+      modoNuvem = false;
+      db = null;
+    }
+  }
+
+  function gerarCodigoGrupo() {
+    var codigo = "";
+    for (var i = 0; i < 6; i++) {
+      codigo += ALFABETO_CODIGO[Math.floor(Math.random() * ALFABETO_CODIGO.length)];
+    }
+    return codigo;
+  }
+
+  // Ponto único de gravação (H1) — o resto do app só chama salvarEstado()
+  // e nem precisa saber se isso vai pro LocalStorage ou pra nuvem.
+  function salvarEstado() {
+    if (modoNuvem && codigoGrupoAtual && db) {
+      db.collection("grupos").doc(codigoGrupoAtual).set(state).catch(function (erro) {
+        // Os dados continuam seguros no cache local do Firestore e reenviam
+        // sozinhos quando a conexão voltar; a pessoa só recebe um aviso.
+        console.warn("Não foi possível sincronizar agora:", erro);
+        toast("Sem conexão — suas alterações sincronizam quando a internet voltar.", { tipo: "erro" });
+      });
+      return true;
+    }
+    return salvarEstadoLocal();
+  }
+
+  // Conecta (ou reconecta) neste grupo em tempo real: qualquer alteração
+  // de qualquer integrante, em qualquer aparelho, chega aqui e atualiza a
+  // tela sozinha — sem precisar recarregar a página.
+  function conectarAoGrupo(codigo, aoConectar, aoFalhar) {
+    if (pararDeOuvirGrupo) { pararDeOuvirGrupo(); pararDeOuvirGrupo = null; }
+    var primeiraVez = true;
+    pararDeOuvirGrupo = db.collection("grupos").doc(codigo).onSnapshot(
+      function (doc) {
+        if (!doc.exists) {
+          if (primeiraVez) { primeiraVez = false; if (aoFalhar) aoFalhar(); }
+          return;
+        }
+        state = doc.data();
+        codigoGrupoAtual = codigo;
+        if (primeiraVez) {
+          primeiraVez = false;
+          localStorage.setItem(CODIGO_KEY, codigo);
+          if (aoConectar) aoConectar();
+        }
+        renderTudo();
+      },
+      function (erro) {
+        console.warn("Erro ao sincronizar o grupo:", erro);
+        if (primeiraVez) { primeiraVez = false; if (aoFalhar) aoFalhar(); }
+      }
+    );
   }
 
   /* ---------------------------------------------------------
@@ -157,12 +248,20 @@
   var elApp = document.getElementById("view-app");
   var elVersionTag = document.getElementById("version-tag");
 
-  function mostrarOnboarding() {
+  function mostrarOnboarding(carregando) {
     elOnboarding.hidden = false;
     elApp.hidden = true;
     elVersionTag.classList.remove("above-tabbar");
     elVersionTag.hidden = false;
-    document.getElementById("input-nome-grupo").focus();
+
+    // "carregando" = reconectando a um grupo salvo neste aparelho: some
+    // com o formulário por um instante em vez de deixar a pessoa preencher
+    // tudo de novo enquanto o app já está buscando os dados dela.
+    document.getElementById("carregando-grupo").hidden = !carregando;
+    document.getElementById("form-grupo").hidden = !!carregando;
+    document.getElementById("bloco-entrar-codigo").hidden = !!carregando || !modoNuvem;
+
+    if (!carregando) document.getElementById("input-nome-grupo").focus();
   }
 
   function mostrarApp() {
@@ -274,11 +373,74 @@
       grupo: { nome: nomeGrupo, integrantes: integrantesTemp.slice() },
       tarefas: []
     };
-    salvarEstado();
+
+    if (modoNuvem) {
+      var codigoNovo = gerarCodigoGrupo();
+      codigoGrupoAtual = codigoNovo;
+      db.collection("grupos").doc(codigoNovo).set(state)
+        .then(function () { conectarAoGrupo(codigoNovo); })
+        .catch(function (erro) {
+          // Mesmo sem internet agora, o Firestore guarda a escrita em cache
+          // e reenvia sozinho depois — por isso ainda vale escutar o grupo.
+          console.warn("Não foi possível criar o grupo na nuvem agora:", erro);
+          toast("Sem conexão — o grupo sincroniza assim que a internet voltar.", { tipo: "erro" });
+          conectarAoGrupo(codigoNovo);
+        });
+      toast("Grupo criado! Compartilhe o código com o resto da squad.");
+      mostrarApp();
+      irParaAba("painel");
+      return;
+    }
+
+    salvarEstadoLocal();
     toast("Grupo criado! Bora criar a primeira tarefa.");
     mostrarApp();
     irParaAba("painel");
   });
+
+  // "Já tem um código de grupo? Entrar" — só existe (e só fica visível) em modoNuvem.
+  document.getElementById("bloco-entrar-codigo").hidden = !modoNuvem;
+  if (modoNuvem) {
+    var btnEntrarCodigo = document.getElementById("btn-entrar-codigo");
+    var inputCodigoEntrar = document.getElementById("input-codigo-entrar");
+    var erroCodigo = document.getElementById("erro-codigo");
+
+    function mostrarErroCodigo(mensagem) {
+      erroCodigo.textContent = mensagem;
+      erroCodigo.hidden = false;
+    }
+
+    function tentarEntrarComCodigo() {
+      var codigo = inputCodigoEntrar.value.trim().toUpperCase();
+      erroCodigo.hidden = true;
+      if (!codigo) return;
+      btnEntrarCodigo.disabled = true;
+      db.collection("grupos").doc(codigo).get().then(function (doc) {
+        btnEntrarCodigo.disabled = false;
+        if (!doc.exists) {
+          mostrarErroCodigo("Não encontramos nenhum grupo com esse código.");
+          return;
+        }
+        conectarAoGrupo(codigo, function () {
+          toast("Grupo conectado!");
+          mostrarApp();
+          irParaAba("painel");
+        });
+      }).catch(function (erro) {
+        btnEntrarCodigo.disabled = false;
+        console.warn("Não foi possível procurar esse código agora:", erro);
+        mostrarErroCodigo("Sem conexão — tente de novo em instantes.");
+      });
+    }
+
+    btnEntrarCodigo.addEventListener("click", tentarEntrarComCodigo);
+    inputCodigoEntrar.addEventListener("keydown", function (evento) {
+      if (evento.key === "Enter") {
+        evento.preventDefault();
+        tentarEntrarComCodigo();
+      }
+    });
+  }
 
   /* ---------------------------------------------------------
      Dialog de nova tarefa
@@ -662,7 +824,31 @@
       li.appendChild(span);
       lista.appendChild(li);
     });
+
+    var cardCodigo = document.getElementById("codigo-grupo-card");
+    if (modoNuvem && codigoGrupoAtual) {
+      cardCodigo.hidden = false;
+      document.getElementById("codigo-grupo-texto").textContent = codigoGrupoAtual;
+    } else {
+      cardCodigo.hidden = true;
+    }
+
+    atualizarZonaRisco();
   }
+
+  document.getElementById("btn-copiar-codigo").addEventListener("click", function () {
+    if (!codigoGrupoAtual) return;
+    function avisarCopiaManual() {
+      toast("Não foi possível copiar automaticamente. Código: " + codigoGrupoAtual);
+    }
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(codigoGrupoAtual).then(function () {
+        toast("Código copiado!");
+      }).catch(avisarCopiaManual);
+    } else {
+      avisarCopiaManual();
+    }
+  });
 
   function adicionarIntegranteReal() {
     var input = document.getElementById("input-integrante-2");
@@ -686,26 +872,63 @@
     }
   });
 
-  // H5 — confirmação em duas etapas antes de uma ação destrutiva e irreversível
+  // H5 — confirmação em duas etapas antes de uma ação destrutiva/irreversível.
+  // Em modo nuvem, "sair do grupo" não é destrutivo pra ninguém além de quem
+  // clicou (só esquece o código neste aparelho) — por isso o texto e o
+  // visual mudam (atualizarZonaRisco), mas a confirmação em duas etapas
+  // continua, pra evitar clique acidental.
+  var elPerigoZona = document.getElementById("perigo-zona");
+  var elPerigoZonaTitulo = document.getElementById("perigo-zona-titulo");
+  var elPerigoZonaTexto = document.getElementById("perigo-zona-texto");
   var btnReiniciar = document.getElementById("btn-reiniciar");
   var reiniciarArmado = false;
   var reiniciarTimeout = null;
+
+  function textoBotaoReiniciar() {
+    return modoNuvem && codigoGrupoAtual ? "Sair deste grupo" : "Reiniciar dados do grupo";
+  }
+
+  function atualizarZonaRisco() {
+    var emGrupoCompartilhado = modoNuvem && codigoGrupoAtual;
+    elPerigoZona.classList.toggle("is-neutro", emGrupoCompartilhado);
+    elPerigoZonaTitulo.textContent = emGrupoCompartilhado ? "Sair do grupo" : "Zona de risco";
+    elPerigoZonaTexto.textContent = emGrupoCompartilhado
+      ? "Isso esquece o código deste grupo neste aparelho. As tarefas continuam salvas pro resto da squad."
+      : "Isso apaga o grupo e todas as tarefas deste navegador.";
+    if (!reiniciarArmado) btnReiniciar.textContent = textoBotaoReiniciar();
+  }
+
   btnReiniciar.addEventListener("click", function () {
     if (!reiniciarArmado) {
       reiniciarArmado = true;
       btnReiniciar.textContent = "Clique de novo para confirmar";
       reiniciarTimeout = setTimeout(function () {
         reiniciarArmado = false;
-        btnReiniciar.textContent = "Reiniciar dados do grupo";
+        btnReiniciar.textContent = textoBotaoReiniciar();
       }, 5000);
       return;
     }
     clearTimeout(reiniciarTimeout);
+    reiniciarArmado = false;
+
+    if (modoNuvem && codigoGrupoAtual) {
+      if (pararDeOuvirGrupo) { pararDeOuvirGrupo(); pararDeOuvirGrupo = null; }
+      localStorage.removeItem(CODIGO_KEY);
+      codigoGrupoAtual = null;
+      state = { grupo: null, tarefas: [] };
+      integrantesTemp = [];
+      document.getElementById("form-grupo").reset();
+      var inputCodigo = document.getElementById("input-codigo-entrar");
+      if (inputCodigo) inputCodigo.value = "";
+      renderChipsOnboarding();
+      mostrarOnboarding();
+      toast("Você saiu do grupo. As tarefas continuam salvas pro resto da squad.");
+      return;
+    }
+
     localStorage.removeItem(STORAGE_KEY);
     state = { grupo: null, tarefas: [] };
     integrantesTemp = [];
-    btnReiniciar.textContent = "Reiniciar dados do grupo";
-    reiniciarArmado = false;
     document.getElementById("form-grupo").reset();
     renderChipsOnboarding();
     mostrarOnboarding();
@@ -773,13 +996,36 @@
   /* ---------------------------------------------------------
      Inicialização
      --------------------------------------------------------- */
-  var estadoSalvo = carregarEstado();
-  if (estadoSalvo) {
-    state = estadoSalvo;
-    mostrarApp();
-    irParaAba("painel");
+  var codigoSalvo = modoNuvem ? localStorage.getItem(CODIGO_KEY) : null;
+
+  if (codigoSalvo) {
+    // Já tinha um grupo sincronizado neste aparelho — reconecta sozinho,
+    // sem pedir pra digitar o código de novo.
+    mostrarOnboarding(true);
+    conectarAoGrupo(
+      codigoSalvo,
+      function () {
+        mostrarApp();
+        irParaAba("painel");
+      },
+      function () {
+        // Código salvo não existe mais na nuvem (grupo apagado, por
+        // exemplo) — H9: não trava, só volta pro onboarding normal.
+        localStorage.removeItem(CODIGO_KEY);
+        renderChipsOnboarding();
+        mostrarOnboarding();
+        toast("Não encontramos mais o seu grupo. Crie um novo ou entre com um código.", { tipo: "erro" });
+      }
+    );
   } else {
-    renderChipsOnboarding();
-    mostrarOnboarding();
+    var estadoSalvo = carregarEstadoLocal();
+    if (estadoSalvo) {
+      state = estadoSalvo;
+      mostrarApp();
+      irParaAba("painel");
+    } else {
+      renderChipsOnboarding();
+      mostrarOnboarding();
+    }
   }
 })();
