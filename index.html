@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Combinado — organize o trabalho em grupo</title>
+  <meta name="description" content="Combinado ajuda seu grupo a ver quem está fazendo o quê, até quando, sem precisar perguntar no WhatsApp.">
+  <meta name="theme-color" content="#4338CA">
+
+  <!-- Open Graph / preview ao colar o link no grupo (Critério F — qualidade de entrega) -->
+  <!-- Depois de publicar no GitHub Pages, troque "og-image.png" e "url" abaixo pela URL completa (https://usuario.github.io/repo/...) — várias redes só carregam a prévia com URL absoluta. -->
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="Combinado — organize o trabalho em grupo">
+  <meta property="og:description" content="Veja quem está fazendo o quê, até quando, sem precisar perguntar no grupo.">
+  <meta property="og:image" content="og-image.png">
+  <meta property="og:url" content="">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Combinado — organize o trabalho em grupo">
+  <meta name="twitter:description" content="Veja quem está fazendo o quê, até quando, sem precisar perguntar no grupo.">
+  <meta name="twitter:image" content="og-image.png">
+
+  <link rel="manifest" href="manifest.json">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🤝</text></svg>">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Public+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+  <!-- Região de anúncios para leitores de tela (heurística 1 — visibilidade do status) -->
+  <div id="toast-region" class="toast-region" aria-live="polite" aria-atomic="true"></div>
+
+  <a class="skip-link" href="#conteudo-principal">Pular para o conteúdo</a>
+
+  <!-- ===================== ONBOARDING ===================== -->
+  <section id="view-onboarding" class="view view-onboarding" hidden>
+    <div class="onboarding-card">
+      <div class="onboarding-mark" aria-hidden="true">🤝</div>
+      <p class="kicker">Antes de começar</p>
+      <h1>Combinado</h1>
+      <p class="lede">Cadastre a sua squad. Isso fica salvo só neste navegador — sem conta, sem senha.</p>
+
+      <form id="form-grupo" novalidate>
+        <div class="field">
+          <label for="input-nome-grupo">Nome do grupo</label>
+          <input id="input-nome-grupo" name="nomeGrupo" type="text" maxlength="40" required
+                 aria-describedby="erro-nome-grupo" placeholder="Ex.: Squad Beta">
+          <p id="erro-nome-grupo" class="field-erro" hidden>Dê um nome ao grupo para continuar.</p>
+        </div>
+
+        <div class="field">
+          <label for="input-integrante">Integrantes</label>
+          <div class="chip-input">
+            <input id="input-integrante" type="text" maxlength="30" placeholder="Nome da pessoa e Enter">
+            <button type="button" id="btn-add-integrante" class="btn btn-secondary">Adicionar</button>
+          </div>
+          <ul id="lista-integrantes" class="chip-list" aria-label="Integrantes adicionados"></ul>
+          <p id="erro-integrantes" class="field-erro" hidden>Adicione pelo menos uma pessoa (pode ser só você, por enquanto).</p>
+        </div>
+
+        <button type="submit" class="btn btn-primary btn-block">Criar grupo</button>
+      </form>
+    </div>
+  </section>
+
+  <!-- ===================== APP ===================== -->
+  <div id="view-app" class="app-shell" hidden>
+
+    <header class="app-header">
+      <div class="app-header-top">
+        <span class="brand">🤝 Combinado</span>
+        <button id="btn-abrir-grupo" class="icon-btn" aria-label="Ver integrantes do grupo">
+          <span aria-hidden="true">☰</span>
+        </button>
+      </div>
+      <h1 id="nome-grupo-exibido" class="grupo-nome">—</h1>
+      <div class="progresso-linha" role="group" aria-label="Progresso geral do trabalho">
+        <div class="progresso">
+          <div class="progresso-trilha">
+            <div id="progresso-preenchimento" class="progresso-preenchimento" style="width:0%"></div>
+          </div>
+          <span id="progresso-numero" class="progresso-numero">0%</span>
+        </div>
+        <p id="progresso-texto" class="progresso-texto">0 de 0 tarefas prontas</p>
+      </div>
+    </header>
+
+    <main id="conteudo-principal">
+
+      <!-- PAINEL -->
+      <section id="view-painel" class="view">
+        <div id="painel-alertas" class="alert-list" aria-live="polite"></div>
+        <div id="painel-conquistas" class="conquistas-row"></div>
+
+        <div id="painel-vazio" class="estado-vazio" hidden>
+          <div class="estado-icone" aria-hidden="true">🗂️</div>
+          <h2>Ainda não há tarefas</h2>
+          <p>Crie a primeira tarefa e diga quem cuida de cada parte do trabalho.</p>
+          <button type="button" class="btn btn-primary" data-abrir-nova-tarefa>Criar primeira tarefa</button>
+        </div>
+
+        <ul id="lista-tarefas" class="task-list"></ul>
+      </section>
+
+      <!-- CHECKLIST -->
+      <section id="view-checklist" class="view" hidden>
+        <div class="section-head">
+          <h2>Checklist de entrega</h2>
+          <p>Antes de entregar, confirme que cada parte foi revisada por alguém do grupo.</p>
+        </div>
+        <p id="checklist-resumo" class="checklist-resumo">0 de 0 itens revisados</p>
+        <ul id="lista-checklist" class="checklist-list"></ul>
+        <div id="checklist-vazio" class="estado-vazio" hidden>
+          <div class="estado-icone" aria-hidden="true">✅</div>
+          <h2>Nada para revisar ainda</h2>
+          <p>Crie tarefas no Painel — elas aparecem aqui para a revisão final.</p>
+        </div>
+      </section>
+
+      <!-- GRUPO -->
+      <section id="view-grupo" class="view" hidden>
+        <div class="section-head">
+          <h2>Seu grupo</h2>
+        </div>
+        <ul id="lista-integrantes-grupo" class="member-list"></ul>
+
+        <div id="instalar-zona" class="instalar-zona" hidden>
+          <h3>📲 Instalar o Combinado</h3>
+          <p>Adicione à tela inicial do celular pra abrir como um app de verdade, com ícone próprio e funcionando sem internet.</p>
+          <button type="button" id="btn-instalar" class="btn btn-secondary">Instalar app</button>
+        </div>
+
+        <div class="add-integrante-inline">
+          <label for="input-integrante-2" class="visually-hidden">Adicionar integrante</label>
+          <input id="input-integrante-2" type="text" maxlength="30" placeholder="Nome da nova pessoa">
+          <button type="button" id="btn-add-integrante-2" class="btn btn-secondary">Adicionar</button>
+        </div>
+
+        <div class="perigo-zona">
+          <h3>Zona de risco</h3>
+          <p>Isso apaga o grupo e todas as tarefas deste navegador.</p>
+          <button type="button" id="btn-reiniciar" class="btn btn-perigo">Reiniciar dados do grupo</button>
+        </div>
+      </section>
+
+    </main>
+
+    <nav class="tab-bar" aria-label="Navegação principal">
+      <button type="button" class="tab-btn is-active" data-view="painel" aria-current="page">
+        <span aria-hidden="true">🗂️</span><span>Painel</span>
+      </button>
+      <button type="button" class="tab-btn" data-view="checklist">
+        <span aria-hidden="true">✅</span><span>Checklist</span>
+      </button>
+      <button type="button" class="tab-btn" data-view="grupo">
+        <span aria-hidden="true">👥</span><span>Grupo</span>
+      </button>
+    </nav>
+
+    <button type="button" id="fab-nova-tarefa" class="fab" data-abrir-nova-tarefa aria-label="Nova tarefa">+</button>
+  </div>
+
+  <!-- ===================== DIALOG: NOVA TAREFA ===================== -->
+  <dialog id="dialog-tarefa" class="dialog" aria-labelledby="titulo-dialog-tarefa">
+    <form id="form-tarefa" method="dialog" novalidate>
+      <div class="dialog-head">
+        <h2 id="titulo-dialog-tarefa"><span aria-hidden="true">🗒️</span> Nova tarefa</h2>
+        <button type="button" class="icon-btn" data-fechar-dialog aria-label="Fechar">✕</button>
+      </div>
+
+      <div class="field">
+        <label for="input-titulo-tarefa">O que precisa ser feito?</label>
+        <input id="input-titulo-tarefa" name="titulo" type="text" maxlength="80" required
+               aria-describedby="erro-titulo-tarefa" placeholder="Ex.: Escrever a introdução">
+        <p id="erro-titulo-tarefa" class="field-erro" hidden>Descreva a tarefa para continuar.</p>
+      </div>
+
+      <div class="field">
+        <label for="select-responsavel">Responsável</label>
+        <select id="select-responsavel" name="responsavel" required aria-describedby="erro-responsavel"></select>
+        <p id="erro-responsavel" class="field-erro" hidden>Escolha quem cuida desta tarefa.</p>
+      </div>
+
+      <div class="field">
+        <label for="input-prazo">Prazo</label>
+        <input id="input-prazo" name="prazo" type="date" required aria-describedby="erro-prazo dica-prazo">
+        <p id="dica-prazo" class="field-dica">Vocês recebem um aviso quando o prazo estiver próximo.</p>
+        <p id="erro-prazo" class="field-erro" hidden>Escolha uma data de entrega.</p>
+      </div>
+
+      <div class="dialog-actions">
+        <button type="button" class="btn btn-secondary" data-fechar-dialog>Cancelar</button>
+        <button type="submit" id="btn-salvar-tarefa" class="btn btn-primary">Criar tarefa</button>
+      </div>
+    </form>
+  </dialog>
+
+  <p id="version-tag" class="version-tag" aria-hidden="true">v1.3.0</p>
+
+  <script src="js/app.js"></script>
+</body>
+</html>
