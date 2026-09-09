@@ -172,8 +172,9 @@ select:focus-visible, [tabindex]:focus-visible{
 }
 .onboarding-mark{
   width:52px; height:52px; border-radius:16px; background:var(--accent-soft);
-  display:flex; align-items:center; justify-content:center; font-size:24px; margin-bottom:18px;
+  display:flex; align-items:center; justify-content:center; color:var(--accent-strong); margin-bottom:18px;
 }
+.onboarding-mark svg{ width:26px; height:26px; }
 .onboarding-card .kicker{ font-size:12px; text-transform:uppercase; letter-spacing:.08em; color:var(--accent); font-weight:700; }
 .onboarding-card h1{ font-size:30px; font-weight:600; margin:8px 0 6px; }
 .onboarding-card .lede{ color:var(--text-muted); font-size:14.5px; margin-bottom:24px; }
@@ -187,7 +188,11 @@ select:focus-visible, [tabindex]:focus-visible{
   box-shadow:0 4px 16px -8px rgba(0,0,0,.35);
 }
 .app-header-top{ display:flex; align-items:center; justify-content:space-between; }
-.brand{ font-family:'Fraunces',serif; font-weight:600; font-size:14.5px; opacity:.85; letter-spacing:.01em; }
+.brand{
+  font-family:'Fraunces',serif; font-weight:600; font-size:14.5px; opacity:.85; letter-spacing:.01em;
+  display:inline-flex; align-items:center; gap:6px;
+}
+.brand-mark{ width:15px; height:15px; flex-shrink:0; }
 .grupo-nome{ font-size:23px; font-weight:600; margin-top:6px; }
 .app-header .icon-btn{ color:var(--accent-contrast); }
 .app-header .icon-btn:hover{ background:rgba(255,255,255,.16); }

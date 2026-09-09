@@ -27,12 +27,12 @@
    ========================================================= */
 
 var firebaseConfig = {
-  apiKey: "AIzaSyAkZHSxv9RHTcVVfvUxzM4czaBTxg58KSU",
-  authDomain: "combinado-fb3c3.firebaseapp.com",
-  projectId: "combinado-fb3c3",
-  storageBucket: "combinado-fb3c3.firebasestorage.app",
-  messagingSenderId: "770787945760",
-  appId: "1:770787945760:web:6f3b786a04f3764c337b45"
+  apiKey: "COLE_AQUI",
+  authDomain: "COLE_AQUI",
+  projectId: "COLE_AQUI",
+  storageBucket: "COLE_AQUI",
+  messagingSenderId: "COLE_AQUI",
+  appId: "COLE_AQUI"
 };
 
 window.firebaseConfig = firebaseConfig;

@@ -2,6 +2,10 @@
 
 Registro de decisões e iterações do Combinado — serve como evidência de processo pro M4/M5 do A3. Adicione uma entrada nova a cada rodada de teste ou ajuste importante (não precisa ser a cada commit pequeno).
 
+## [1.5] — identidade visual (logo)
+- **Adicionado:** logo própria do Combinado — um "C" (de Combinado) com um checkmark dentro, substituindo o emoji 🤝 usado até então. Aplicada no favicon, no ícone do cabeçalho, no selo do onboarding, nos ícones do PWA (`icons/icon-192.png` e `icons/icon-512.png`), num ícone dedicado pra tela inicial do iPhone (`icons/apple-touch-icon.png`, novo) e na imagem de preview ao colar o link (`og-image.png`).
+- **Atualizado:** `sw.js` — cache subiu pra `v2` (arquivos novos/alterados) e passou a guardar também `js/firebase-config.js` e o ícone do iPhone.
+
 ## [1.4] — sincronização entre integrantes
 - **Adicionado:** sincronização entre integrantes via código de grupo (6 letras) + Firestore — item 1 do roadmap, o maior furo funcional que faltava. Totalmente opcional: sem configurar `js/firebase-config.js`, o app continua 100% LocalStorage, exatamente como antes.
 - **Adicionado:** "Já tem um código de grupo? Entrar" no onboarding, e um card com o código + botão "Copiar" na tela de Grupo (só aparecem em modo nuvem).

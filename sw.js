@@ -10,16 +10,18 @@
    isso força a limpeza do cache velho no próximo carregamento.
    ========================================================= */
 
-var CACHE_NAME = "combinado-cache-v1";
+var CACHE_NAME = "combinado-cache-v2";
 
 var ARQUIVOS_PARA_CACHE = [
   "./",
   "./index.html",
   "./css/style.css",
   "./js/app.js",
+  "./js/firebase-config.js",
   "./manifest.json",
   "./icons/icon-192.png",
-  "./icons/icon-512.png"
+  "./icons/icon-512.png",
+  "./icons/apple-touch-icon.png"
 ];
 
 self.addEventListener("install", function (evento) {
