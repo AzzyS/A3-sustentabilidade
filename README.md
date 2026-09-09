@@ -44,14 +44,17 @@ A cada `push` na branch `main`, um GitHub Action (`.github/workflows/validate.ym
 | Heurística de Nielsen aplicada | Onde está no código | Critério da rubrica |
 |---|---|---|
 | **H1** Visibilidade do status | Barra de progresso, badges de status, toasts (`toast()` em `app.js`), alertas de prazo | B, mínimo técnico (feedback) |
+| **H2** Correspondência com o mundo real | Status em português no vocabulário do grupo (`STATUS_LABEL`), datas em formato brasileiro (`formatarData`), "código de grupo" como o mesmo modelo mental de código de sala/convite de jogos e apps de chat | B |
 | **H3** Controle e liberdade | Excluir tarefa com "Desfazer" (`excluirTarefaComDesfazer`), cancelar sempre disponível no diálogo | B |
 | **H4** Consistência e padrões | Um único componente de badge/botão reaproveitado em todas as telas | B, D |
 | **H5** Prevenção de erros | Validação do formulário antes de salvar; confirmação em duas etapas para reiniciar dados | B, **mínimo técnico (1º erro)** |
 | **H6** Reconhecer, não lembrar | Integrantes viram chips visíveis; select de responsável em vez de digitar o nome | B |
+| **H7** Flexibilidade e eficiência de uso | Atalho de teclado "N" no Painel abre direto o diálogo de nova tarefa (dica no `title` do botão "+", invisível pra quem não usa) | B |
+| **H8** Estética e design minimalista | Paleta de cores curta e reutilizada como tokens (`:root` em `style.css`), sem elemento decorativo que não carregue informação | B |
 | **H9** Recuperação de erros | `try/catch` ao ler/gravar LocalStorage com aviso amigável em vez de tela quebrada | B, **mínimo técnico (2º erro)** |
 | **H10** Ajuda e documentação | Dica no campo de prazo, mensagens de estado vazio explicando o próximo passo | B |
 
-Isso cobre diretamente o mínimo técnico "prevenção e recuperação de ao menos dois erros relevantes" e boa parte do Critério B (1,5 pt). Guardem prints de **antes/depois** de cada linha da tabela — é a evidência que a rubrica pede.
+As 10 heurísticas de Nielsen estão cobertas. Isso cobre diretamente o mínimo técnico "prevenção e recuperação de ao menos dois erros relevantes" e boa parte do Critério B (1,5 pt). Guardem prints de **antes/depois** de cada linha da tabela — é a evidência que a rubrica pede.
 
 Fora das heurísticas, três outros critérios já têm evidência pronta:
 

@@ -13,6 +13,10 @@
 
   var STORAGE_KEY = "combinado:v1";
 
+  // H2 — correspondência com o mundo real: nomes de status no vocabulário
+  // que o grupo já usa pra falar de tarefa em português (não "todo/doing/done"
+  // nem termos técnicos de gestão de projeto), no modelo mental de quadro
+  // Kanban que a maioria já reconhece de outros apps.
   var STATUS_LABEL = { afazer: "A fazer", fazendo: "Fazendo", pronto: "Pronto" };
   var STATUS_ORDEM = { afazer: 0, fazendo: 1, pronto: 2 };
 
@@ -58,6 +62,10 @@
 
      H1 (visibilidade do status) — o código do grupo fica sempre à
      mostra na tela de Grupo, nunca é uma sincronização "escondida".
+     H2 (correspondência com o mundo real) — "código de grupo" de 6
+     letras é o mesmo modelo mental de código de sala/convite que
+     jogos e apps de chat já usam; não pedimos e-mail/senha, que
+     seria um conceito mais técnico e menos familiar pra esse uso.
      H9 (recuperação de erros) — se a nuvem falhar (sem internet, por
      exemplo), o app avisa e continua funcionando com o último dado
      que já tinha, em vez de travar.
@@ -163,6 +171,8 @@
   function formatarData(iso) {
     var d = paraData(iso);
     if (!d) return "sem prazo";
+    // H2 — data em formato brasileiro (dd/mm), não o formato ISO
+    // (aaaa-mm-dd) que só faz sentido pra quem programa.
     return d.toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit" });
   }
 
@@ -544,6 +554,26 @@
     }
     tarefaEmEdicaoId = null;
     renderTudo();
+  });
+
+  /* ---------------------------------------------------------
+     Atalho de teclado — H7 (flexibilidade e eficiência de uso)
+     Fica invisível pra quem está começando (não aparece na tela,
+     só numa dica no título do botão "+"), mas acelera quem já usa
+     o Combinado com frequência: apertar "N" no Painel abre direto
+     o diálogo de nova tarefa, sem precisar mirar no botão.
+     --------------------------------------------------------- */
+  document.addEventListener("keydown", function (evento) {
+    if (evento.key !== "n" && evento.key !== "N") return;
+    if (evento.metaKey || evento.ctrlKey || evento.altKey) return; // não atropela atalhos do navegador/SO
+    if (elApp.hidden) return; // só depois de já estar dentro do app
+    if (dialogTarefa.open) return; // já tem um diálogo aberto
+    if (document.getElementById("view-painel").hidden) return; // só no Painel, onde o "+" também mora
+    var alvo = document.activeElement;
+    var tag = alvo && alvo.tagName;
+    if (tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT") return; // não atropela quem tá digitando
+    evento.preventDefault();
+    abrirDialogTarefa(null);
   });
 
   /* ---------------------------------------------------------

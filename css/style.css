@@ -2,6 +2,12 @@
    Combinado — estilos
    Mobile-first: as regras base valem para telas pequenas;
    media queries min-width adicionam o layout maior.
+
+   H8 — estética e design minimalista: paleta curta reutilizada
+   como tokens (nada de cor solta espalhada pelo CSS — toda cor do
+   app vem de uma das variáveis abaixo), sem elemento decorativo
+   que não carregue informação, e hierarquia visual por peso/tamanho
+   de texto e espaçamento em vez de bordas e caixas por toda parte.
    ========================================================= */
 
 :root{

@@ -2,6 +2,10 @@
 
 Registro de decisões e iterações do Combinado — serve como evidência de processo pro M4/M5 do A3. Adicione uma entrada nova a cada rodada de teste ou ajuste importante (não precisa ser a cada commit pequeno).
 
+## [1.5.1] — cobertura completa das 10 heurísticas
+- **Adicionado:** atalho de teclado "N" no Painel abre direto o diálogo de nova tarefa (H7 — flexibilidade e eficiência de uso), com dica discreta no `title` do botão "+".
+- **Documentado:** comentários no código e novas linhas na tabela do README pra H2 (correspondência com o mundo real) e H8 (estética minimalista) — já estavam implementadas, só faltava a evidência formal pra rubrica. As 10 heurísticas de Nielsen agora estão documentadas.
+
 ## [1.5] — identidade visual (logo)
 - **Adicionado:** logo própria do Combinado — um "C" (de Combinado) com um checkmark dentro, substituindo o emoji 🤝 usado até então. Aplicada no favicon, no ícone do cabeçalho, no selo do onboarding, nos ícones do PWA (`icons/icon-192.png` e `icons/icon-512.png`), num ícone dedicado pra tela inicial do iPhone (`icons/apple-touch-icon.png`, novo) e na imagem de preview ao colar o link (`og-image.png`).
 - **Atualizado:** `sw.js` — cache subiu pra `v2` (arquivos novos/alterados) e passou a guardar também `js/firebase-config.js` e o ícone do iPhone.
