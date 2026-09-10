@@ -129,11 +129,13 @@ select:focus-visible, [tabindex]:focus-visible{
 /* ---------------- Campos de formulário ---------------- */
 .field{ margin-bottom:18px; }
 .field label{ display:block; font-size:13.5px; font-weight:600; margin-bottom:6px; }
-.field input, .field select{
+.field input, .field select, .field textarea{
   width:100%; min-height:46px; padding:10px 14px;
   border:1.5px solid var(--border-strong); border-radius:10px;
   background:var(--surface); color:var(--text);
+  font-family:inherit; font-size:14.5px;
 }
+.field textarea{ resize:vertical; min-height:78px; }
 .field input:invalid[data-tocado="true"]{ border-color:var(--danger); }
 .field-erro{ color:var(--danger); font-size:13px; margin-top:6px; }
 .field-dica{ color:var(--text-muted); font-size:12.5px; margin-top:6px; }
@@ -235,6 +237,27 @@ main{ padding:18px 16px 8px; max-width:720px; margin:0 auto; }
 }
 .conquista.is-neutra{ background:var(--surface-alt); color:var(--text-muted); }
 
+/* ---------------- Progresso por integrante (H1 — visibilidade também
+   no nível individual, não só do grupo como um todo) ---------------- */
+.progresso-integrantes{ display:flex; flex-direction:column; gap:8px; margin-bottom:14px; }
+.progresso-integrantes:empty{ display:none; }
+.membro-progresso{
+  background:var(--surface); border:1px solid var(--border); border-radius:var(--radius);
+  padding:12px 14px; box-shadow:var(--shadow);
+}
+.membro-progresso-cabecalho{ display:flex; align-items:center; gap:8px; margin-bottom:8px; }
+.membro-progresso-nome{ font-weight:600; font-size:13.5px; flex:1; }
+.membro-progresso-numero{ font-size:13px; font-weight:700; font-variant-numeric:tabular-nums; color:var(--text-muted); }
+.membro-progresso-trilha{ height:6px; border-radius:99px; background:var(--surface-alt); overflow:hidden; }
+.membro-progresso-fill{ height:100%; border-radius:99px; transition:width .3s ease; }
+.membro-progresso-fill.pal-0{ background:var(--pal-0-fg); }
+.membro-progresso-fill.pal-1{ background:var(--pal-1-fg); }
+.membro-progresso-fill.pal-2{ background:var(--pal-2-fg); }
+.membro-progresso-fill.pal-3{ background:var(--pal-3-fg); }
+.membro-progresso-fill.pal-4{ background:var(--pal-4-fg); }
+.membro-progresso-fill.pal-5{ background:var(--pal-5-fg); }
+.membro-progresso-texto{ font-size:12px; color:var(--text-muted); margin-top:6px; }
+
 /* ---------------- Estado vazio ---------------- */
 .estado-vazio{ text-align:center; padding:48px 20px; color:var(--text-muted); }
 .estado-icone{
@@ -244,6 +267,9 @@ main{ padding:18px 16px 8px; max-width:720px; margin:0 auto; }
 }
 .estado-vazio h2{ font-size:18px; color:var(--text); margin-bottom:6px; }
 .estado-vazio p{ font-size:14px; margin-bottom:18px; max-width:34ch; margin-inline:auto; }
+
+/* ---------------- Feedback do grupo (roadmap item 7) ---------------- */
+.feedback-form{ margin-bottom:22px; }
 
 /* ---------------- Lista de tarefas ---------------- */
 .task-list{ display:flex; flex-direction:column; gap:10px; }
@@ -420,6 +446,12 @@ main{ padding:18px 16px 8px; max-width:720px; margin:0 auto; }
 .dialog-head{ display:flex; justify-content:space-between; align-items:center; margin-bottom:18px; }
 .dialog-head h2{ font-size:19px; font-weight:600; }
 .dialog-actions{ display:flex; gap:10px; justify-content:flex-end; margin-top:6px; }
+
+/* dialog-confirmar não usa <form> (não há campo pra validar), então o
+   padding vai direto no elemento — o resto do miolo (.dialog-head,
+   .dialog-actions) é o mesmo de qualquer outro dialog do app (H4). */
+.dialog-confirmar{ padding:22px 22px 20px; }
+.dialog-confirmar-texto{ font-size:14.5px; color:var(--text-muted); line-height:1.5; margin:0 0 22px; }
 
 /* ---------------- Toasts ---------------- */
 .toast-region{

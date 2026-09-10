@@ -31,24 +31,25 @@ A cada `push` na branch `main`, um GitHub Action (`.github/workflows/validate.ym
 ## O que já está implementado
 
 - **Onboarding** — criar grupo e integrantes, sem conta nem senha.
-- **Painel** — lista de tarefas com responsável, prazo e status (a fazer / fazendo / pronto), alertas de prazo próximo e atraso, progresso geral do grupo.
-- **Editar e excluir tarefa** — o mesmo diálogo de criar reabre preenchido para editar; exclusão sempre com "Desfazer".
+- **Painel** — lista de tarefas com responsável, prazo e status (a fazer / fazendo / pronto), alertas de prazo próximo e atraso, progresso geral do grupo e progresso individual de cada integrante (uma barra por pessoa, na mesma ordem do grupo — não é ranking).
+- **Editar e excluir tarefa** — o mesmo diálogo de criar reabre preenchido para editar; excluir sempre pede confirmação num diálogo antes, e mesmo depois de confirmado ainda dá pra "Desfazer".
 - **Conquistas do grupo** — selo "Squad em dia" quando não há nenhuma tarefa atrasada, e contagem de tarefas concluídas no prazo (nunca compara pessoas entre si).
 - **Checklist de entrega** — revisão final item a item antes de entregar o trabalho.
 - **Grupo** — adicionar integrantes depois e reiniciar os dados do zero.
 - **Sincronização entre integrantes (opcional)** — com um código de grupo de 6 letras, cada pessoa vê as mesmas tarefas em tempo real, em qualquer aparelho. Veja a seção "Sincronização entre integrantes" abaixo.
+- **Feedback do grupo** — aba própria para registrar o que funcionou ou travou no uso do app, com quadro de status (Novo / Em análise / Resolvido). Veja a seção "Feedback do grupo" abaixo.
 - Tudo salvo em `localStorage` (chave `combinado:v1`) por padrão — sem backend, sem custo de hospedagem. A sincronização é 100% opcional e cai de volta pro LocalStorage sozinha se não for configurada.
 
 ## Como isso conecta com a rubrica do A3
 
 | Heurística de Nielsen aplicada | Onde está no código | Critério da rubrica |
 |---|---|---|
-| **H1** Visibilidade do status | Barra de progresso, badges de status, toasts (`toast()` em `app.js`), alertas de prazo | B, mínimo técnico (feedback) |
+| **H1** Visibilidade do status | Barra de progresso, badges de status, toasts (`toast()` em `app.js`), alertas de prazo, e agora também uma barra de progresso por integrante (`renderProgressoIntegrantes`) — o status não é só do grupo, é de cada pessoa | B, mínimo técnico (feedback) |
 | **H2** Correspondência com o mundo real | Status em português no vocabulário do grupo (`STATUS_LABEL`), datas em formato brasileiro (`formatarData`), "código de grupo" como o mesmo modelo mental de código de sala/convite de jogos e apps de chat | B |
 | **H3** Controle e liberdade | Excluir tarefa com "Desfazer" (`excluirTarefaComDesfazer`), cancelar sempre disponível no diálogo | B |
-| **H4** Consistência e padrões | Um único componente de badge/botão reaproveitado em todas as telas | B, D |
-| **H5** Prevenção de erros | Validação do formulário antes de salvar; confirmação em duas etapas para reiniciar dados | B, **mínimo técnico (1º erro)** |
-| **H6** Reconhecer, não lembrar | Integrantes viram chips visíveis; select de responsável em vez de digitar o nome | B |
+| **H4** Consistência e padrões | Um único componente de badge/botão reaproveitado em todas as telas; diálogo de confirmação de exclusão (`#dialog-confirmar`) usa o mesmo estilo visual dos outros diálogos do app, não um `confirm()` nativo do navegador | B, D |
+| **H5** Prevenção de erros | Validação do formulário antes de salvar; confirmação em duas etapas para reiniciar dados; **diálogo de confirmação antes de excluir qualquer tarefa** (`abrirConfirmacao`), com a ação ainda reversível por "Desfazer" depois — duas camadas de segurança pra uma ação destrutiva | B, **mínimo técnico (1º erro)** |
+| **H6** Reconhecer, não lembrar | Integrantes viram chips visíveis; select de responsável em vez de digitar o nome; barra de progresso por pessoa usa a mesma cor de avatar de cada integrante em toda a tela (`paletaDe`) | B |
 | **H7** Flexibilidade e eficiência de uso | Atalho de teclado "N" no Painel abre direto o diálogo de nova tarefa (dica no `title` do botão "+", invisível pra quem não usa) | B |
 | **H8** Estética e design minimalista | Paleta de cores curta e reutilizada como tokens (`:root` em `style.css`), sem elemento decorativo que não carregue informação | B |
 | **H9** Recuperação de erros | `try/catch` ao ler/gravar LocalStorage com aviso amigável em vez de tela quebrada | B, **mínimo técnico (2º erro)** |
@@ -92,6 +93,14 @@ Por padrão, o Combinado salva tudo só no navegador de quem está usando — po
 
 **Sem fazer nada disso**, o Combinado continua funcionando exatamente como sempre funcionou (LocalStorage, um navegador por vez) — nada quebra.
 
+## Feedback do grupo (roadmap item 7)
+
+Aba **Feedback**, ao lado de Grupo: qualquer integrante escolhe seu nome, escreve em uma frase o que aconteceu ("não achei onde editar o prazo", "o atalho N é ótimo") e registra. Cada feedback nasce com status **Novo** e pode ser movido para **Em análise** ou **Resolvido** pelo mesmo tipo de `<select>` colorido já usado no status das tarefas — de propósito, para reaproveitar um padrão visual que o grupo já reconhece (heurística 4, consistência) em vez de inventar um sistema novo.
+
+**O que isso resolve:** antes, o `CHANGELOG.md` só crescia quando quem estava programando lembrava de escrever uma entrada — um processo invisível pro resto do grupo. Agora qualquer pessoa registra um problema ou um elogio no momento em que usa o app, sem precisar abrir o editor de código.
+
+**O que isso não faz sozinho:** o Combinado é um site estático (sem servidor, sem banco de dados próprio) — o app não escreve no arquivo `CHANGELOG.md` automaticamente. Os feedbacks ficam guardados junto com o resto dos dados do grupo (LocalStorage, ou sincronizados via Firestore se o grupo estiver usando o código de grupo). De tempos em tempos, alguém do grupo revisa os itens marcados como **Resolvido** e transforma os relevantes em entradas de verdade no `CHANGELOG.md` — a aba de Feedback é a matéria-prima bruta, não o documento final. Isso também é evidência de processo pro M4/M5: dá pra mostrar print de "isso foi reportado aqui" ao lado da entrada correspondente no changelog.
+
 ## PWA — funciona offline e pode ser instalado
 
 - `sw.js` guarda os arquivos do app (HTML/CSS/JS/ícones) em cache no primeiro acesso — depois disso, o Combinado abre mesmo sem internet (as tarefas continuam vindo do LocalStorage, que já era local).
@@ -106,12 +115,23 @@ Este código nasceu a partir de dois documentos de planejamento do grupo (o guia
 - HTML semântico (`header`, `nav`, `main`, `dialog`, `label` associado a cada campo).
 - Foco visível em todo elemento interativo (`:focus-visible`).
 - `aria-live` na região de toasts e nos alertas de prazo.
+- **Anúncio por voz ao mudar o status de uma tarefa** — trocar o status pelo `<select>` do card (item 6 do roadmap) atualiza uma região `aria-live="polite"` só para leitor de tela (`#sr-anuncio-status`, visualmente oculta com `.visually-hidden`), sem abrir um toast visual a cada clique. Quem enxerga já vê o badge mudar de cor; quem usa leitor de tela agora ouve "Nome da tarefa: status alterado para Fazendo/Pronto/A fazer".
 - Alvo de toque de pelo menos 44×44px em todos os botões.
 - Nada depende só de cor: todo badge de status também tem texto.
 - `prefers-reduced-motion` respeitado.
 - Suporte a tema claro/escuro pelo `prefers-color-scheme`.
+- Verificação automatizada via árvore de acessibilidade do Chromium (Playwright `page.accessibility.snapshot()`): todos os botões e o `<select>` de status têm nome acessível; nenhum elemento interativo ficou sem rótulo.
 
-**Não cuidado ainda** (fica de próximo passo para o M4/M5): teste com leitor de tela de verdade (NVDA/VoiceOver) e revisão de contraste com uma ferramenta tipo Lighthouse ou axe DevTools.
+**Ainda falta (não dá pra automatizar sozinho, precisa de gente do grupo):** navegar o app de ponta a ponta com um leitor de tela real — NVDA no Windows ou VoiceOver no Mac/iPhone — porque só uma pessoa usando o software de verdade percebe nuances (ordem de leitura estranha, texto confuso, foco perdido) que a árvore de acessibilidade não captura sozinha. Roteiro sugerido pra essa rodada (~15 min, vale gravar a tela pra virar evidência do M4/M5):
+
+1. Ligue o leitor de tela (Windows: `Ctrl+Win+Enter` no NVDA; Mac: `Cmd+F5` no VoiceOver) e navegue só de teclado (`Tab`/`Shift+Tab`, sem mouse).
+2. Onboarding: confirme que dá pra criar o grupo e adicionar integrantes sem enxergar a tela.
+3. Painel: abra uma tarefa nova pelo atalho **N**, confirme que o diálogo é anunciado ao abrir, preencha e salve.
+4. Mude o status de uma tarefa pelo `<select>` do card e confirme que o leitor de tela fala a frase de status alterado (é o item novo desta seção).
+5. Exclua uma tarefa e confirme que o toast de "Desfazer" é lido em voz alta a tempo de reagir.
+6. Anote qualquer trecho confuso ou silencioso — isso vira o próximo ajuste do roadmap.
+
+Também falta: revisão de contraste com uma ferramenta tipo Lighthouse ou axe DevTools.
 
 ## Próximos passos (roadmap combinado com o grupo)
 
@@ -122,8 +142,9 @@ Numeração fixa — use pra pedir a próxima etapa sem precisar reexplicar o qu
 - [x] **3.** Qualidade de entrega — Open Graph, LICENSE, `.gitignore`, CHANGELOG, GitHub Action de validação.
 - [x] **4.** Editar tarefa existente.
 - [x] **5.** PWA offline de verdade — service worker + prompt de instalação.
-- [ ] **6.** Acessibilidade mais a fundo — teste com leitor de tela real (NVDA/VoiceOver) e anúncio por voz quando o status de uma tarefa muda.
-- [ ] **7.** Feedback/changelog contínuo — um jeito simples de registrar "isso funcionou/isso travou" dentro do fluxo do grupo, alimentando o `CHANGELOG.md`.
+- [x] **6a.** Anúncio por voz quando o status de uma tarefa muda (região `aria-live` dedicada, sem toast visual).
+- [ ] **6b.** Teste de ponta a ponta com leitor de tela real (NVDA/VoiceOver) — precisa de uma pessoa do grupo rodando de verdade; roteiro sugerido na seção "Acessibilidade" acima.
+- [x] **7.** Feedback/changelog contínuo — aba "Feedback" no app, com quadro de status (Novo / Em análise / Resolvido). Veja "Feedback do grupo" abaixo.
 
 ## Estrutura de pastas
 

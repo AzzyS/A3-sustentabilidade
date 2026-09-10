@@ -32,6 +32,9 @@
   <!-- Região de anúncios para leitores de tela (heurística 1 — visibilidade do status) -->
   <div id="toast-region" class="toast-region" aria-live="polite" aria-atomic="true"></div>
 
+  <!-- Anúncio por voz (só leitor de tela, sem toast visual) quando o status de uma tarefa muda -->
+  <div id="sr-anuncio-status" class="visually-hidden" aria-live="polite" aria-atomic="true"></div>
+
   <a class="skip-link" href="#conteudo-principal">Pular para o conteúdo</a>
 
   <!-- ===================== ONBOARDING ===================== -->
@@ -119,6 +122,12 @@
         <div id="painel-alertas" class="alert-list" aria-live="polite"></div>
         <div id="painel-conquistas" class="conquistas-row"></div>
 
+        <!-- Progresso por integrante — mesma barra do cabeçalho, uma por pessoa
+             (H1: visibilidade do status também no nível individual, não só do
+             grupo). De propósito em ordem fixa (a mesma do grupo), nunca
+             ordenada pelo % — não é um ranking, é só "onde cada um está". -->
+        <div id="painel-progresso-integrantes" class="progresso-integrantes"></div>
+
         <div id="painel-vazio" class="estado-vazio" hidden>
           <div class="estado-icone" aria-hidden="true">🗂️</div>
           <h2>Ainda não há tarefas</h2>
@@ -180,6 +189,39 @@
         </div>
       </section>
 
+      <!-- FEEDBACK (roadmap item 7 — feedback/changelog contínuo) -->
+      <section id="view-feedback" class="view" hidden>
+        <div class="section-head">
+          <h2>Feedback do grupo</h2>
+          <p>Registre o que funcionou ou travou usando o Combinado — isso vira matéria-prima pro <code>CHANGELOG.md</code>, sem precisar mexer em código pra anotar.</p>
+        </div>
+
+        <form id="form-feedback" class="feedback-form" novalidate>
+          <div class="field">
+            <label for="select-feedback-autor">Quem está registrando?</label>
+            <select id="select-feedback-autor" required aria-describedby="erro-feedback-autor"></select>
+            <p id="erro-feedback-autor" class="field-erro" hidden>Escolha quem está deixando o feedback.</p>
+          </div>
+          <div class="field">
+            <label for="input-feedback-texto">O que aconteceu?</label>
+            <textarea id="input-feedback-texto" maxlength="280" required rows="3"
+                      aria-describedby="erro-feedback-texto dica-feedback"
+                      placeholder="Ex.: não achei onde editar o prazo da tarefa"></textarea>
+            <p id="dica-feedback" class="field-dica">Curto e direto — isso vira uma linha do changelog depois.</p>
+            <p id="erro-feedback-texto" class="field-erro" hidden>Escreva o que aconteceu para continuar.</p>
+          </div>
+          <button type="submit" class="btn btn-primary">Registrar feedback</button>
+        </form>
+
+        <div id="feedback-vazio" class="estado-vazio" hidden>
+          <div class="estado-icone" aria-hidden="true">💬</div>
+          <h2>Nenhum feedback ainda</h2>
+          <p>Registre o que funcionou bem ou travou enquanto o grupo usa o Combinado.</p>
+        </div>
+
+        <ul id="lista-feedbacks" class="task-list"></ul>
+      </section>
+
     </main>
 
     <nav class="tab-bar" aria-label="Navegação principal">
@@ -191,6 +233,9 @@
       </button>
       <button type="button" class="tab-btn" data-view="grupo">
         <span aria-hidden="true">👥</span><span>Grupo</span>
+      </button>
+      <button type="button" class="tab-btn" data-view="feedback">
+        <span aria-hidden="true">💬</span><span>Feedback</span>
       </button>
     </nav>
 
@@ -232,7 +277,24 @@
     </form>
   </dialog>
 
-  <p id="version-tag" class="version-tag" aria-hidden="true">v1.5.1</p>
+  <!-- ===================== DIALOG: CONFIRMAR EXCLUSÃO ===================== -->
+  <!-- Genérico, reaproveitado por qualquer exclusão do app (H5 — prevenção
+       de erros: uma ação destrutiva sempre passa por aqui antes de acontecer;
+       H4 — mesmo diálogo/estilo do resto do app, não um confirm() nativo do
+       navegador, que quebraria a identidade visual). -->
+  <dialog id="dialog-confirmar" class="dialog dialog-confirmar" aria-labelledby="titulo-dialog-confirmar">
+    <div class="dialog-head">
+      <h2 id="titulo-dialog-confirmar"><span aria-hidden="true">⚠️</span> Excluir tarefa?</h2>
+      <button type="button" class="icon-btn" data-fechar-confirmar aria-label="Fechar">✕</button>
+    </div>
+    <p id="texto-dialog-confirmar" class="dialog-confirmar-texto"></p>
+    <div class="dialog-actions">
+      <button type="button" class="btn btn-secondary" data-fechar-confirmar>Cancelar</button>
+      <button type="button" id="btn-confirmar-exclusao" class="btn btn-perigo">Excluir</button>
+    </div>
+  </dialog>
+
+  <p id="version-tag" class="version-tag" aria-hidden="true">v1.5.4</p>
 
   <!-- Firebase é opcional — só entra em ação se js/firebase-config.js tiver
        valores reais (veja o topo daquele arquivo e o README). Sem isso,
