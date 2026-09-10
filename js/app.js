@@ -20,12 +20,20 @@
   var STATUS_LABEL = { afazer: "A fazer", fazendo: "Fazendo", pronto: "Pronto" };
   var STATUS_ORDEM = { afazer: 0, fazendo: 1, pronto: 2 };
 
+  // H4 (consistência) — feedback (roadmap item 7) usa o mesmo vocabulário
+  // visual das tarefas (badge, cor do card, <select> de status) em vez de
+  // inventar um sistema novo. FEEDBACK_STATUS_VISUAL mapeia cada status de
+  // feedback pro status de tarefa equivalente só pra reaproveitar as
+  // classes CSS já existentes (badge-afazer/fazendo/pronto etc.).
+  var FEEDBACK_STATUS_LABEL = { novo: "Novo", analise: "Em análise", resolvido: "Resolvido" };
+  var FEEDBACK_STATUS_VISUAL = { novo: "afazer", analise: "fazendo", resolvido: "pronto" };
+
   /* ---------------------------------------------------------
      Estado + persistência
      H1 (Consistência de dados) — um único ponto de leitura e
      escrita evita que uma tela fique "desatualizada" em relação à outra.
      --------------------------------------------------------- */
-  var state = { grupo: null, tarefas: [] };
+  var state = { grupo: null, tarefas: [], feedbacks: [] };
 
   function carregarEstadoLocal() {
     try {
@@ -176,6 +184,15 @@
     return d.toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit" });
   }
 
+  // H2 — mesma lógica de formatarData, mas com hora, pro carimbo de
+  // tempo do feedback ("registrado às...").
+  function formatarDataHora(isoCompleto) {
+    var d = new Date(isoCompleto);
+    if (isNaN(d.getTime())) return "";
+    return d.toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit" }) +
+      " às " + d.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" });
+  }
+
   function diasAteoPrazo(iso) {
     var d = paraData(iso);
     if (!d) return null;
@@ -252,6 +269,30 @@
   }
 
   /* ---------------------------------------------------------
+     Anúncio só-leitor-de-tela (item 6 do roadmap — acessibilidade):
+     mudar o status de uma tarefa é uma alteração visível (badge muda de
+     cor) mas silenciosa pra quem usa leitor de tela, já que o próprio
+     elemento que dispara a troca (o <select>) já fala sua nova opção
+     selecionada. Esta região separada da de toasts existe pra anunciar
+     a MUDANÇA em si sem abrir um toast visual a cada clique.
+     --------------------------------------------------------- */
+  var regiaoAnuncioStatus = document.getElementById("sr-anuncio-status");
+
+  function anunciarMudancaStatus(tarefa) {
+    if (!regiaoAnuncioStatus) return;
+    regiaoAnuncioStatus.textContent =
+      tarefa.titulo + ": status alterado para " + STATUS_LABEL[tarefa.status] + ".";
+  }
+
+  // Mesma região, reaproveitada pro status do feedback (H4 — consistência:
+  // um único mecanismo de anúncio por voz pro app inteiro).
+  function anunciarMudancaStatusFeedback(feedback) {
+    if (!regiaoAnuncioStatus) return;
+    regiaoAnuncioStatus.textContent =
+      "Feedback de " + feedback.autor + ": status alterado para " + FEEDBACK_STATUS_LABEL[feedback.status] + ".";
+  }
+
+  /* ---------------------------------------------------------
      Views (onboarding vs. app) e abas
      --------------------------------------------------------- */
   var elOnboarding = document.getElementById("view-onboarding");
@@ -281,7 +322,7 @@
     renderTudo();
   }
 
-  var abas = ["painel", "checklist", "grupo"];
+  var abas = ["painel", "checklist", "grupo", "feedback"];
   function irParaAba(nome) {
     abas.forEach(function (a) {
       document.getElementById("view-" + a).hidden = a !== nome;
@@ -381,7 +422,8 @@
 
     state = {
       grupo: { nome: nomeGrupo, integrantes: integrantesTemp.slice() },
-      tarefas: []
+      tarefas: [],
+      feedbacks: []
     };
 
     if (modoNuvem) {
@@ -657,6 +699,94 @@
     }
   }
 
+  // H1 (visibilidade do status) — mesma barra do cabeçalho, uma por pessoa:
+  // a do topo mostra "como está o grupo", estas mostram "como está cada um".
+  // H6 (reconhecer, não lembrar) — mesma cor de avatar/paleta usada em toda
+  // parte reaparece aqui, então dá pra reconhecer de quem é a barra sem ler
+  // o nome. De propósito SEM ordenar por %: a ordem é sempre a do grupo
+  // (mesma de renderGrupo), pra não virar um ranking — engajamento
+  // responsável (Critério E) já dito em "Conquistas do grupo" nunca compara
+  // pessoas entre si, e isso vale aqui também.
+  function renderProgressoIntegrantes() {
+    var container = document.getElementById("painel-progresso-integrantes");
+    container.innerHTML = "";
+    if (state.tarefas.length === 0) return;
+
+    state.grupo.integrantes.forEach(function (nome) {
+      var tarefasDaPessoa = state.tarefas.filter(function (t) { return t.responsavel === nome; });
+      if (tarefasDaPessoa.length === 0) return; // sem tarefa atribuída ainda — nada a mostrar
+
+      var prontas = tarefasDaPessoa.filter(function (t) { return t.status === "pronto"; }).length;
+      var pct = Math.round((prontas / tarefasDaPessoa.length) * 100);
+      var paleta = paletaDe(nome);
+
+      var card = document.createElement("div");
+      card.className = "membro-progresso";
+
+      var cabecalho = document.createElement("div");
+      cabecalho.className = "membro-progresso-cabecalho";
+
+      var avatar = document.createElement("span");
+      avatar.className = "task-avatar pal-" + paleta;
+      avatar.setAttribute("aria-hidden", "true");
+      avatar.textContent = iniciais(nome);
+
+      var nomeSpan = document.createElement("span");
+      nomeSpan.className = "membro-progresso-nome";
+      nomeSpan.textContent = nome;
+
+      var numero = document.createElement("span");
+      numero.className = "membro-progresso-numero";
+      numero.textContent = pct + "%";
+
+      cabecalho.appendChild(avatar);
+      cabecalho.appendChild(nomeSpan);
+      cabecalho.appendChild(numero);
+
+      var trilha = document.createElement("div");
+      trilha.className = "membro-progresso-trilha";
+      var preenchimento = document.createElement("div");
+      preenchimento.className = "membro-progresso-fill pal-" + paleta;
+      preenchimento.style.width = pct + "%";
+      trilha.appendChild(preenchimento);
+
+      var texto = document.createElement("p");
+      texto.className = "membro-progresso-texto";
+      texto.textContent = prontas + " de " + tarefasDaPessoa.length + " tarefas prontas";
+
+      card.appendChild(cabecalho);
+      card.appendChild(trilha);
+      card.appendChild(texto);
+      container.appendChild(card);
+    });
+  }
+
+  /* ---------------------------------------------------------
+     Confirmação antes de excluir (H5 — prevenção de erros)
+     Dialog genérico: qualquer exclusão do app passa por aqui antes de
+     acontecer, em vez de cada lista reimplementar sua própria confirmação.
+     --------------------------------------------------------- */
+  var dialogConfirmar = document.getElementById("dialog-confirmar");
+  var tituloDialogConfirmar = document.getElementById("titulo-dialog-confirmar");
+  var textoDialogConfirmar = document.getElementById("texto-dialog-confirmar");
+  var btnConfirmarExclusao = document.getElementById("btn-confirmar-exclusao");
+
+  function abrirConfirmacao(titulo, mensagem, aoConfirmar) {
+    tituloDialogConfirmar.innerHTML = '<span aria-hidden="true">⚠️</span> ' + titulo;
+    textoDialogConfirmar.textContent = mensagem;
+    btnConfirmarExclusao.onclick = function () {
+      dialogConfirmar.close();
+      aoConfirmar();
+    };
+    dialogConfirmar.showModal();
+  }
+
+  document.querySelectorAll("[data-fechar-confirmar]").forEach(function (btn) {
+    btn.addEventListener("click", function () {
+      dialogConfirmar.close();
+    });
+  });
+
   function excluirTarefaComDesfazer(id) {
     var indice = state.tarefas.findIndex(function (t) { return t.id === id; });
     if (indice === -1) return;
@@ -677,9 +807,31 @@
     });
   }
 
+  // H3 (controle e liberdade) — mesmo padrão de "excluir com desfazer"
+  // já usado nas tarefas, reaproveitado aqui pro feedback.
+  function excluirFeedbackComDesfazer(id) {
+    var indice = state.feedbacks.findIndex(function (f) { return f.id === id; });
+    if (indice === -1) return;
+    var removido = state.feedbacks[indice];
+    state.feedbacks.splice(indice, 1);
+    salvarEstado();
+    renderTudo();
+
+    toast("Feedback excluído.", {
+      acaoLabel: "Desfazer",
+      acao: function () {
+        state.feedbacks.splice(indice, 0, removido);
+        salvarEstado();
+        renderTudo();
+        toast("Feedback restaurado.");
+      }
+    });
+  }
+
   function renderPainel() {
     renderAlertas();
     renderConquistas();
+    renderProgressoIntegrantes();
 
     var lista = document.getElementById("lista-tarefas");
     var vazio = document.getElementById("painel-vazio");
@@ -744,6 +896,7 @@
       select.addEventListener("change", function () {
         tarefa.status = select.value;
         salvarEstado();
+        anunciarMudancaStatus(tarefa);
         renderTudo();
       });
 
@@ -762,7 +915,11 @@
       btnExcluir.setAttribute("aria-label", "Excluir tarefa " + tarefa.titulo);
       btnExcluir.innerHTML = ICONE_LIXEIRA;
       btnExcluir.addEventListener("click", function () {
-        excluirTarefaComDesfazer(tarefa.id);
+        abrirConfirmacao(
+          "Excluir tarefa?",
+          'Tem certeza que quer excluir "' + tarefa.titulo + '"? Depois ainda dá pra desfazer por alguns segundos.',
+          function () { excluirTarefaComDesfazer(tarefa.id); }
+        );
       });
 
       controles.appendChild(select);
@@ -866,6 +1023,153 @@
     atualizarZonaRisco();
   }
 
+  /* ---------------------------------------------------------
+     Feedback do grupo (roadmap item 7 — feedback/changelog contínuo)
+     H3 (controle e liberdade) — excluir com desfazer, igual às tarefas.
+     H4 (consistência) — reaproveita badge/select/card de status das
+     tarefas (via FEEDBACK_STATUS_VISUAL) em vez de criar um padrão novo.
+     H6 (reconhecer, não lembrar) — autor escolhido por select, igual ao
+     responsável de tarefa, nunca digitado à mão.
+     Isto é matéria-prima de PROCESSO: alguém do grupo revisa os itens
+     "Resolvido" de vez em quando e transforma em entradas de verdade no
+     CHANGELOG.md — o app não escreve no arquivo sozinho (é um site
+     estático, sem backend), só junta os recados num lugar só.
+     --------------------------------------------------------- */
+  function renderFeedbacks() {
+    var selectAutor = document.getElementById("select-feedback-autor");
+    if (selectAutor) {
+      var valorAtual = selectAutor.value;
+      selectAutor.innerHTML = "";
+      var optPadrao = document.createElement("option");
+      optPadrao.value = "";
+      optPadrao.textContent = "Selecione…";
+      selectAutor.appendChild(optPadrao);
+      state.grupo.integrantes.forEach(function (nome) {
+        var opt = document.createElement("option");
+        opt.value = nome;
+        opt.textContent = nome;
+        selectAutor.appendChild(opt);
+      });
+      if (state.grupo.integrantes.indexOf(valorAtual) !== -1) selectAutor.value = valorAtual;
+    }
+
+    var lista = document.getElementById("lista-feedbacks");
+    var vazio = document.getElementById("feedback-vazio");
+    if (!lista || !vazio) return;
+    lista.innerHTML = "";
+
+    if (!state.feedbacks || state.feedbacks.length === 0) {
+      vazio.hidden = false;
+      return;
+    }
+    vazio.hidden = true;
+
+    // Mais recente primeiro — feedback é um log de atividade, não um
+    // quadro por prioridade como as tarefas.
+    state.feedbacks.slice().reverse().forEach(function (feedback) {
+      var visual = FEEDBACK_STATUS_VISUAL[feedback.status] || "afazer";
+      var li = document.createElement("li");
+      li.className = "task-card status-" + visual;
+
+      var top = document.createElement("div");
+      top.className = "task-top";
+
+      var texto = document.createElement("p");
+      texto.className = "task-titulo";
+      texto.textContent = feedback.texto;
+
+      var badge = document.createElement("span");
+      badge.className = "badge badge-" + visual;
+      badge.textContent = FEEDBACK_STATUS_LABEL[feedback.status];
+
+      top.appendChild(texto);
+      top.appendChild(badge);
+
+      var meta = document.createElement("div");
+      meta.className = "task-meta";
+      var avatar = document.createElement("span");
+      avatar.className = "task-avatar pal-" + paletaDe(feedback.autor);
+      avatar.setAttribute("aria-hidden", "true");
+      avatar.textContent = iniciais(feedback.autor);
+      var nomeAutor = document.createElement("span");
+      nomeAutor.textContent = feedback.autor;
+      var quando = document.createElement("span");
+      quando.textContent = "· " + formatarDataHora(feedback.criadoEm);
+      meta.appendChild(avatar);
+      meta.appendChild(nomeAutor);
+      meta.appendChild(quando);
+
+      var controles = document.createElement("div");
+      controles.className = "task-controls";
+
+      var select = document.createElement("select");
+      select.className = "status-" + visual;
+      select.setAttribute("aria-label", "Status do feedback de " + feedback.autor);
+      ["novo", "analise", "resolvido"].forEach(function (chave) {
+        var opt = document.createElement("option");
+        opt.value = chave;
+        opt.textContent = FEEDBACK_STATUS_LABEL[chave];
+        if (chave === feedback.status) opt.selected = true;
+        select.appendChild(opt);
+      });
+      select.addEventListener("change", function () {
+        feedback.status = select.value;
+        salvarEstado();
+        anunciarMudancaStatusFeedback(feedback);
+        renderTudo();
+      });
+
+      var btnExcluir = document.createElement("button");
+      btnExcluir.type = "button";
+      btnExcluir.className = "task-icon-btn is-perigo";
+      btnExcluir.setAttribute("aria-label", "Excluir feedback de " + feedback.autor);
+      btnExcluir.innerHTML = ICONE_LIXEIRA;
+      btnExcluir.addEventListener("click", function () {
+        excluirFeedbackComDesfazer(feedback.id);
+      });
+
+      controles.appendChild(select);
+      controles.appendChild(btnExcluir);
+
+      li.appendChild(top);
+      li.appendChild(meta);
+      li.appendChild(controles);
+      lista.appendChild(li);
+    });
+  }
+
+  var formFeedback = document.getElementById("form-feedback");
+  if (formFeedback) {
+    formFeedback.addEventListener("submit", function (evento) {
+      evento.preventDefault();
+
+      var autor = document.getElementById("select-feedback-autor").value;
+      var texto = document.getElementById("input-feedback-texto").value.trim();
+
+      var valido = true;
+      function marcarErro(idCampo, mostra) {
+        document.getElementById(idCampo).hidden = !mostra;
+        if (mostra) valido = false;
+      }
+      marcarErro("erro-feedback-autor", !autor);
+      marcarErro("erro-feedback-texto", !texto);
+      if (!valido) return;
+
+      if (!state.feedbacks) state.feedbacks = [];
+      state.feedbacks.push({
+        id: uid(),
+        autor: autor,
+        texto: texto,
+        status: "novo",
+        criadoEm: new Date().toISOString()
+      });
+      salvarEstado();
+      formFeedback.reset();
+      toast("Feedback registrado — obrigado!");
+      renderTudo();
+    });
+  }
+
   document.getElementById("btn-copiar-codigo").addEventListener("click", function () {
     if (!codigoGrupoAtual) return;
     function avisarCopiaManual() {
@@ -945,7 +1249,7 @@
       if (pararDeOuvirGrupo) { pararDeOuvirGrupo(); pararDeOuvirGrupo = null; }
       localStorage.removeItem(CODIGO_KEY);
       codigoGrupoAtual = null;
-      state = { grupo: null, tarefas: [] };
+      state = { grupo: null, tarefas: [], feedbacks: [] };
       integrantesTemp = [];
       document.getElementById("form-grupo").reset();
       var inputCodigo = document.getElementById("input-codigo-entrar");
@@ -957,7 +1261,7 @@
     }
 
     localStorage.removeItem(STORAGE_KEY);
-    state = { grupo: null, tarefas: [] };
+    state = { grupo: null, tarefas: [], feedbacks: [] };
     integrantesTemp = [];
     document.getElementById("form-grupo").reset();
     renderChipsOnboarding();
@@ -979,11 +1283,15 @@
 
   function renderTudo() {
     if (!state.grupo) return;
+    // H9 — grupos criados antes da v1.5.2 não têm esse campo salvo; em vez
+    // de quebrar o render, tratamos como lista vazia na primeira vez.
+    if (!state.feedbacks) state.feedbacks = [];
     atualizarFlagsAtraso();
     renderHeader();
     renderPainel();
     renderChecklist();
     renderGrupo();
+    renderFeedbacks();
   }
 
   /* ---------------------------------------------------------
