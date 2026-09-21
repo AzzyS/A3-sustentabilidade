@@ -2,6 +2,12 @@
 
 Registro de decisões e iterações do Combinado — serve como evidência de processo pro M4/M5 do A3. Adicione uma entrada nova a cada rodada de teste ou ajuste importante (não precisa ser a cada commit pequeno).
 
+## [1.5.6] — removido o botão de menu (☰) do cabeçalho
+- **Removido:** o ícone de hambúrguer (☰) no canto superior direito do cabeçalho, que só levava pra aba Grupo. Decisão do usuário: a barra de abas no rodapé é permanente (nunca esconde nenhuma opção) e cabem só 4 abas ali — um atalho de "menu" só faz sentido quando existem opções escondidas que ele revela, o que não é o caso aqui. Manter os dois caminhos pra mesma coisa era redundância visual sem função (contra H4/H8).
+- **Limpeza:** removido o listener de clique correspondente (`btn-abrir-grupo`) e o CSS morto que ele deixaria pra trás (`.app-header .icon-btn`, a regra que escondia o botão em telas ≥760px).
+- **Testado:** suíte completa de Playwright re-rodada sem regressões; contagem de botões com nome acessível caiu de 8 para 7 (esperado, é o botão removido).
+- **Atualizado:** `CACHE_NAME` do service worker (`v6` → `v7`).
+
 ## [1.5.5] — banner de instalação mais visível (exemplo real de feedback → mudança)
 - **Origem:** um integrante do grupo testou a aba Feedback e registrou "não achei aonde baixar para telefone" — o botão "Instalar app" só existia escondido na aba Grupo. Este item é a resposta direta a esse feedback (o próprio fluxo que o item 7 do roadmap existe pra viabilizar).
 - **Adicionado:** banner flutuante (`#banner-instalar`) no Painel — aparece assim que o navegador confirma que dá pra instalar (`beforeinstallprompt`), fica empilhado acima do botão "+" sem sobrepor, com ícone, texto curto, botão "Instalar" e um "✕" pra fechar.

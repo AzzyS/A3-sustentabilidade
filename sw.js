@@ -10,7 +10,7 @@
    isso força a limpeza do cache velho no próximo carregamento.
    ========================================================= */
 
-var CACHE_NAME = "combinado-cache-v6";
+var CACHE_NAME = "combinado-cache-v7";
 
 var ARQUIVOS_PARA_CACHE = [
   "./",

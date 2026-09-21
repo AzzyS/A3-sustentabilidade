@@ -202,8 +202,6 @@ select:focus-visible, [tabindex]:focus-visible{
 }
 .brand-mark{ width:15px; height:15px; flex-shrink:0; }
 .grupo-nome{ font-size:23px; font-weight:600; margin-top:6px; }
-.app-header .icon-btn{ color:var(--accent-contrast); }
-.app-header .icon-btn:hover{ background:rgba(255,255,255,.16); }
 
 .progresso-linha{ margin-top:16px; }
 .progresso{ display:flex; align-items:center; gap:12px; }
@@ -507,7 +505,6 @@ main{ padding:18px 16px 8px; max-width:720px; margin:0 auto; }
 
 /* ---------------- Telas maiores (tablet/desktop) ---------------- */
 @media (min-width:760px){
-  .app-header-top .icon-btn{ display:none; }
   main{ padding:28px 24px 40px; }
   .task-top{ align-items:center; }
   .tab-bar{ max-width:420px; left:50%; transform:translateX(-50%); border-radius:16px 16px 0 0; box-shadow:var(--shadow); gap:4px; padding:6px; }

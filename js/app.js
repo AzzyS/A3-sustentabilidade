@@ -346,10 +346,6 @@
     });
   });
 
-  document.getElementById("btn-abrir-grupo").addEventListener("click", function () {
-    irParaAba("grupo");
-  });
-
   /* ---------------------------------------------------------
      Onboarding: criar grupo
      H5 (prevenção de erros) — valida antes de deixar prosseguir
