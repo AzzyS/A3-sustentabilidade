@@ -1,0 +1,15 @@
+# Sistema
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Editor
+.vscode/
+.idea/
+
+# Node (só se algum dia entrar alguma ferramenta de build/lint)
+node_modules/
+npm-debug.log*
+
+# Arquivos locais de teste
+*.local.html
