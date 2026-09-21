@@ -323,7 +323,9 @@
   }
 
   var abas = ["painel", "checklist", "grupo", "feedback"];
+  var abaAtual = "painel";
   function irParaAba(nome) {
+    abaAtual = nome;
     abas.forEach(function (a) {
       document.getElementById("view-" + a).hidden = a !== nome;
       var btn = document.querySelector('.tab-btn[data-view="' + a + '"]');
@@ -335,6 +337,7 @@
     // o selo de versão mora no mesmo cantinho do botão "+", então some
     // junto com ele pra nunca ficar um em cima do outro.
     elVersionTag.hidden = nome === "painel";
+    atualizarBannerInstalar();
   }
 
   document.querySelectorAll(".tab-btn").forEach(function (btn) {
@@ -1307,28 +1310,59 @@
     });
   }
 
+  /* ---------------------------------------------------------
+     Instalar o app (PWA)
+     Dois pontos de entrada pro mesmo prompt do navegador: o banner
+     flutuante no Painel (H1 — visível na tela que a pessoa mais usa,
+     resolveu um feedback real do grupo que não achava essa opção) e a
+     seção fixa na aba Grupo (H3 — controle e liberdade: fechar o banner
+     não tira a opção de instalar depois, ela continua ali).
+     --------------------------------------------------------- */
   var promptDeInstalacaoAdiado = null;
+  var bannerInstalarFechadoPelaPessoa = false;
   var zonaInstalar = document.getElementById("instalar-zona");
   var btnInstalar = document.getElementById("btn-instalar");
+  var bannerInstalar = document.getElementById("banner-instalar");
+  var btnInstalarBanner = document.getElementById("btn-instalar-banner");
+  var btnFecharBannerInstalar = document.getElementById("btn-fechar-banner-instalar");
 
-  window.addEventListener("beforeinstallprompt", function (evento) {
-    evento.preventDefault();
-    promptDeInstalacaoAdiado = evento;
-    zonaInstalar.hidden = false; // só aparece quando o navegador confirma que dá pra instalar
-  });
+  function atualizarBannerInstalar() {
+    if (!bannerInstalar) return;
+    var deveMostrar = !!promptDeInstalacaoAdiado && !bannerInstalarFechadoPelaPessoa && abaAtual === "painel";
+    bannerInstalar.hidden = !deveMostrar;
+  }
 
-  btnInstalar.addEventListener("click", function () {
+  function instalarApp() {
     if (!promptDeInstalacaoAdiado) return;
     promptDeInstalacaoAdiado.prompt();
     promptDeInstalacaoAdiado.userChoice.then(function (resultado) {
       if (resultado.outcome === "accepted") toast("Combinado instalado! 🎉");
       promptDeInstalacaoAdiado = null;
       zonaInstalar.hidden = true;
+      atualizarBannerInstalar();
     });
+  }
+
+  window.addEventListener("beforeinstallprompt", function (evento) {
+    evento.preventDefault();
+    promptDeInstalacaoAdiado = evento;
+    zonaInstalar.hidden = false; // só aparece quando o navegador confirma que dá pra instalar
+    atualizarBannerInstalar();
   });
+
+  btnInstalar.addEventListener("click", instalarApp);
+  if (btnInstalarBanner) btnInstalarBanner.addEventListener("click", instalarApp);
+
+  if (btnFecharBannerInstalar) {
+    btnFecharBannerInstalar.addEventListener("click", function () {
+      bannerInstalarFechadoPelaPessoa = true;
+      atualizarBannerInstalar();
+    });
+  }
 
   window.addEventListener("appinstalled", function () {
     zonaInstalar.hidden = true;
+    atualizarBannerInstalar();
   });
 
   /* ---------------------------------------------------------

@@ -436,6 +436,41 @@ main{ padding:18px 16px 8px; max-width:720px; margin:0 auto; }
 }
 .fab:hover{ background:var(--accent-strong); }
 
+/* ---------------- Banner flutuante de instalação ----------------
+   Fica empilhado ACIMA do FAB (mesmo canto, sem sobrepor) — 18px do fab
+   + 56px de altura do fab + 12px de respiro = 86px acima da tab-bar. */
+.banner-instalar{
+  position:fixed; left:12px; right:12px; bottom:calc(var(--tab-bar-h) + 86px);
+  z-index:25; display:flex; align-items:center; gap:12px;
+  background:var(--surface); border:1px solid var(--border); border-radius:16px;
+  box-shadow:var(--shadow); padding:14px 12px 14px 16px;
+  max-width:456px; margin-inline:auto;
+  animation:banner-instalar-entrar .25s ease;
+}
+/* o display:flex acima tem a mesma especificidade do [hidden] nativo do
+   navegador — sem isto aqui, o banner apareceria mesmo com hidden=true. */
+.banner-instalar[hidden]{ display:none; }
+@keyframes banner-instalar-entrar{
+  from{ opacity:0; transform:translateY(10px); }
+  to{ opacity:1; transform:translateY(0); }
+}
+.banner-instalar-icone{
+  width:34px; height:34px; border-radius:10px; background:var(--accent-soft); color:var(--accent-strong);
+  display:flex; align-items:center; justify-content:center; flex-shrink:0;
+}
+.banner-instalar-icone svg{ width:18px; height:18px; }
+.banner-instalar-texto{ display:flex; flex-direction:column; gap:2px; flex:1; min-width:0; }
+.banner-instalar-texto strong{ font-size:14px; font-weight:700; }
+.banner-instalar-texto span{ font-size:12px; color:var(--text-muted); line-height:1.35; }
+.banner-instalar-acoes{ display:flex; align-items:center; gap:2px; flex-shrink:0; }
+/* padding/fonte mais compactos, mas sem furar o alvo de toque de 44px
+   (H: acessibilidade) — só o .icon-btn padrão (44×44) já resolve isso. */
+.banner-instalar-acoes .btn{ padding:8px 14px; font-size:13.5px; }
+.banner-instalar-acoes .icon-btn{ color:var(--text-muted); }
+@media (prefers-reduced-motion: reduce){
+  .banner-instalar{ animation:none; }
+}
+
 /* ---------------- Dialog ---------------- */
 .dialog{
   border:none; border-radius:18px; padding:0; width:min(440px, calc(100vw - 32px));

@@ -239,6 +239,29 @@
       </button>
     </nav>
 
+    <!-- Banner flutuante de instalação (roadmap — descoberta do "Instalar app").
+         Só aparece quando o navegador confirma que dá pra instalar
+         (beforeinstallprompt) e só na aba Painel, que é a tela que a
+         pessoa mais vê. Fechar aqui não desliga a opção pra sempre — o
+         mesmo botão continua disponível na aba Grupo (H3 — controle e
+         liberdade: sempre dá pra voltar e instalar depois). -->
+    <div id="banner-instalar" class="banner-instalar" hidden role="status">
+      <span class="banner-instalar-icone" aria-hidden="true">
+        <svg viewBox="0 0 100 100" fill="none">
+          <path d="M67 28 A28 28 0 1 0 67 72" stroke="currentColor" stroke-width="11" stroke-linecap="round"/>
+          <path d="M40 50 L48 58 L64 40" stroke="currentColor" stroke-width="9" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </span>
+      <div class="banner-instalar-texto">
+        <strong>Instalar o Combinado</strong>
+        <span>Adicione à tela inicial pra abrir como um app, sem precisar do navegador</span>
+      </div>
+      <div class="banner-instalar-acoes">
+        <button type="button" id="btn-instalar-banner" class="btn btn-primary">Instalar</button>
+        <button type="button" id="btn-fechar-banner-instalar" class="icon-btn" aria-label="Fechar aviso de instalação">✕</button>
+      </div>
+    </div>
+
     <button type="button" id="fab-nova-tarefa" class="fab" data-abrir-nova-tarefa aria-label="Nova tarefa" title="Nova tarefa (atalho: N)">+</button>
   </div>
 
@@ -294,7 +317,7 @@
     </div>
   </dialog>
 
-  <p id="version-tag" class="version-tag" aria-hidden="true">v1.5.4</p>
+  <p id="version-tag" class="version-tag" aria-hidden="true">v1.5.5</p>
 
   <!-- Firebase é opcional — só entra em ação se js/firebase-config.js tiver
        valores reais (veja o topo daquele arquivo e o README). Sem isso,

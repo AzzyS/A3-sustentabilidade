@@ -106,7 +106,8 @@ Aba **Feedback**, ao lado de Grupo: qualquer integrante escolhe seu nome, escrev
 - `sw.js` guarda os arquivos do app (HTML/CSS/JS/ícones) em cache no primeiro acesso — depois disso, o Combinado abre mesmo sem internet (as tarefas continuam vindo do LocalStorage, que já era local).
 - Se mudarem `index.html`, `style.css` ou `app.js`, **subam o número em `CACHE_NAME` no `sw.js`** (`v1` → `v2`) — sem isso, quem já visitou o site pode continuar vendo a versão antiga em cache por um tempo.
 - Isso só funciona servido por `https://` ou `http://localhost` — não funciona abrindo o `index.html` direto do disco (`file://`). No GitHub Pages funciona automaticamente.
-- O botão "Instalar app" (na tela de Grupo) só aparece quando o navegador dispara o evento `beforeinstallprompt` — hoje isso é Chrome/Edge no Android e desktop. No iPhone (Safari) não existe esse evento; a instalação lá continua sendo pelo menu de compartilhar → "Adicionar à Tela de Início", manualmente.
+- O convite pra instalar só aparece quando o navegador dispara o evento `beforeinstallprompt` — hoje isso é Chrome/Edge no Android e desktop. No iPhone (Safari) não existe esse evento; a instalação lá continua sendo pelo menu de compartilhar → "Adicionar à Tela de Início", manualmente.
+- **Dois pontos de entrada pro mesmo convite (v1.5.5):** um banner flutuante no Painel — a tela que a pessoa mais usa — e a opção fixa na aba Grupo. Isso existe por causa de um feedback real registrado na aba Feedback do próprio app ("não achei aonde baixar para telefone"): o botão só existia escondido em Grupo. Fechar o banner com o "✕" não desliga a instalação pra sempre — a opção da aba Grupo continua disponível (H3 — controle e liberdade).
 
 Este código nasceu a partir de dois documentos de planejamento do grupo (o guia de heurísticas e o brief de problema/persona/jornada) — vale linkar os dois no Way Hub junto com este repositório, para mostrar a trilha de decisão completa.
 

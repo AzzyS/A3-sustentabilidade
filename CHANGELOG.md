@@ -2,6 +2,14 @@
 
 Registro de decisões e iterações do Combinado — serve como evidência de processo pro M4/M5 do A3. Adicione uma entrada nova a cada rodada de teste ou ajuste importante (não precisa ser a cada commit pequeno).
 
+## [1.5.5] — banner de instalação mais visível (exemplo real de feedback → mudança)
+- **Origem:** um integrante do grupo testou a aba Feedback e registrou "não achei aonde baixar para telefone" — o botão "Instalar app" só existia escondido na aba Grupo. Este item é a resposta direta a esse feedback (o próprio fluxo que o item 7 do roadmap existe pra viabilizar).
+- **Adicionado:** banner flutuante (`#banner-instalar`) no Painel — aparece assim que o navegador confirma que dá pra instalar (`beforeinstallprompt`), fica empilhado acima do botão "+" sem sobrepor, com ícone, texto curto, botão "Instalar" e um "✕" pra fechar.
+- **Decisão de design (H3 — controle e liberdade):** fechar o banner não desliga a instalação pra sempre — a seção que já existia na aba Grupo continua lá como caminho permanente. O banner some do Painel se a pessoa trocar de aba e reaparece ao voltar, só não reaparece sozinho depois de fechado com o "✕" (nessa mesma sessão da página).
+- **Corrigido durante o teste:** o CSS do banner usava `display:flex`, que por especificidade empata com o `[hidden]` nativo do navegador e o navegador prioriza a regra do autor — resultado: o banner ficava sempre visível, mesmo com `hidden` corretamente marcado como `true` no JavaScript. Corrigido com uma regra `.banner-instalar[hidden]{ display:none; }` mais específica. Vale lembrar desse padrão pra qualquer elemento novo que receba `display` próprio (os elementos antigos do app não tinham esse problema por não declararem `display`).
+- **Testado:** roteiro Playwright simulando o evento `beforeinstallprompt` do navegador — banner aparece só no Painel, some nas outras abas, não reaparece sozinho após fechado, a opção da aba Grupo continua funcionando, e o fluxo de instalação (prompt → aceite → toast) funciona pelos dois pontos de entrada.
+- **Atualizado:** `CACHE_NAME` do service worker (`v5` → `v6`).
+
 ## [1.5.4] — progresso por integrante + confirmação antes de excluir tarefa
 - **Adicionado:** no Painel, uma barra de progresso por integrante (`renderProgressoIntegrantes`) logo abaixo das conquistas — mesma barra visual do cabeçalho, uma por pessoa, mostrando "X de Y tarefas prontas". Só aparece quem já tem tarefa atribuída; a cor da barra é a mesma cor de avatar da pessoa em toda a tela (H6, H1).
 - **Decisão registrada:** a lista de integrantes segue sempre a ordem do grupo, nunca ordenada por %. Não é um ranking — é a mesma lógica já documentada em "Conquistas do grupo" (Critério E: engajamento responsável, nunca compara pessoas entre si).
